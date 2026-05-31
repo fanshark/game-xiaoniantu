@@ -156,7 +156,7 @@ const Game = {
         // Reset player
         Player.tileX = 4;
         Player.tileY = 10;
-        Player.sizeMM = 5;
+        Player.sizeMM = 100;
         Player.hp = 100;
         Player.maxHP = 100;
         Player.coins = 0;
@@ -172,6 +172,9 @@ const Game = {
         Player.friendRescued = false;
         Player.visitedZones = new Set(['start']);
         Player.moving = false;
+        Player.weapon = null;
+        Player.weaponBonus = 0;
+        Player.weaponInventory = [];
 
         // Hide game over
         document.getElementById('gameover-screen').classList.remove('active');
