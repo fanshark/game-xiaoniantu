@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小黏土走走走 - Little Clay Go Go Go</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- 游戏容器 -->
+    <div id="game-container">
+        <!-- 开场动画层 -->
+        <div id="intro-screen" class="screen active">
+            <canvas id="intro-canvas"></canvas>
+            <button id="skip-intro" class="btn-skip">跳过 Skip</button>
+        </div>
+
+        <!-- 游戏主画面 -->
+        <div id="game-screen" class="screen">
+            <canvas id="game-canvas"></canvas>
+            <!-- HUD -->
+            <div id="hud">
+                <div id="hud-size"><span class="hud-label">体型:</span> <span id="size-display">5mm</span></div>
+                <div id="hud-coins"><span class="hud-label">金币:</span> <span id="coins-display">0</span></div>
+                <div id="hud-hp"><span class="hud-label">HP:</span> <span id="hp-display">100/100</span></div>
+                <div id="hud-pet"><span class="hud-label">宠物:</span> <span id="pet-display">无</span></div>
+                <div id="hud-zone"><span class="hud-label">区域:</span> <span id="zone-display">起始小路</span></div>
+            </div>
+            <!-- 小地图 -->
+            <div id="minimap">
+                <canvas id="minimap-canvas"></canvas>
+            </div>
+        </div>
+
+        <!-- 对话界面 -->
+        <div id="dialogue-overlay" class="overlay hidden">
+            <div id="dialogue-box">
+                <div id="dialogue-speaker"></div>
+                <div id="dialogue-text"></div>
+                <div id="dialogue-choices"></div>
+                <div id="dialogue-input-area" class="hidden">
+                    <input type="text" id="dialogue-input" placeholder="输入你想说的话..." autocomplete="off">
+                    <button id="dialogue-send">发送</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 商店界面 -->
+        <div id="shop-overlay" class="overlay hidden">
+            <div id="shop-box">
+                <h2 id="shop-title">商店</h2>
+                <div id="shop-items"></div>
+                <button id="shop-close" class="btn-action">离开商店</button>
+            </div>
+        </div>
+
+        <!-- 战斗界面 -->
+        <div id="combat-overlay" class="overlay hidden">
+            <div id="combat-hud">
+                <div id="enemy-info">
+                    <span id="enemy-name"></span>
+                    <div id="enemy-hp-bar"><div id="enemy-hp-fill"></div></div>
+                </div>
+                <div id="combat-counter" class="hidden">
+                    <span>击败小菌: </span><span id="fungi-count">0</span>/100
+                </div>
+            </div>
+        </div>
+
+        <!-- 游戏结束 -->
+        <div id="gameover-screen" class="screen hidden">
+            <div id="gameover-content">
+                <h1 id="gameover-title"></h1>
+                <p id="gameover-text"></p>
+                <button id="gameover-restart" class="btn-action">重新开始</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/assets.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/world.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/npc.js"></script>
+    <script src="js/combat.js"></script>
+    <script src="js/shop.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/animation.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

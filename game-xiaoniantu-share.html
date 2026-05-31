@@ -1,0 +1,4777 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小黏土走走走 - Little Clay Go Go Go</title>
+    <style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #1a1a2e;
+    font-family: 'Microsoft YaHei', 'SimHei', sans-serif;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+#game-container {
+    position: relative;
+    width: 800px;
+    height: 600px;
+    border: 3px solid #ffb6c1;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 0 30px rgba(255, 182, 193, 0.3);
+}
+
+.screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+}
+
+.screen.active {
+    display: block;
+}
+
+canvas {
+    display: block;
+}
+
+#intro-canvas, #game-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/* Skip button */
+.btn-skip {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    border: 1px solid #ffb6c1;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    z-index: 100;
+    transition: all 0.3s;
+}
+
+.btn-skip:hover {
+    background: rgba(255, 182, 193, 0.4);
+}
+
+/* HUD */
+#hud {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    padding: 10px 15px;
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.8;
+    border: 1px solid rgba(255, 182, 193, 0.5);
+}
+
+.hud-label {
+    color: #ffb6c1;
+    font-weight: bold;
+}
+
+/* Minimap */
+#minimap {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 150px;
+    height: 120px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(255, 182, 193, 0.5);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#minimap-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+/* Overlays */
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    z-index: 50;
+    pointer-events: none;
+}
+
+.overlay > div {
+    pointer-events: all;
+}
+
+.overlay.hidden {
+    display: none;
+}
+
+/* Dialogue */
+#dialogue-box {
+    width: 90%;
+    max-width: 700px;
+    background: rgba(20, 20, 40, 0.95);
+    border: 2px solid #ffb6c1;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    color: #fff;
+}
+
+#dialogue-speaker {
+    color: #ffb6c1;
+    font-weight: bold;
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+#dialogue-text {
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 15px;
+    min-height: 40px;
+}
+
+#dialogue-choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+#dialogue-choices button {
+    background: rgba(255, 182, 193, 0.2);
+    border: 1px solid #ffb6c1;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+#dialogue-choices button:hover {
+    background: rgba(255, 182, 193, 0.5);
+    transform: scale(1.05);
+}
+
+#dialogue-input-area {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+#dialogue-input-area.hidden {
+    display: none;
+}
+
+#dialogue-input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #ffb6c1;
+    color: #fff;
+    padding: 10px 15px;
+    border-radius: 20px;
+    font-size: 14px;
+    outline: none;
+}
+
+#dialogue-input:focus {
+    border-color: #ff69b4;
+    box-shadow: 0 0 10px rgba(255, 105, 180, 0.3);
+}
+
+#dialogue-send {
+    background: #ff69b4;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+#dialogue-send:hover {
+    background: #ff1493;
+}
+
+/* Shop */
+#shop-box {
+    width: 80%;
+    max-width: 600px;
+    background: rgba(20, 20, 40, 0.95);
+    border: 2px solid #ffd700;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 30px;
+    color: #fff;
+    max-height: 70%;
+    overflow-y: auto;
+}
+
+#shop-box h2 {
+    color: #ffd700;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+#shop-items {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.shop-item {
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.4);
+    border-radius: 8px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+}
+
+.shop-item:hover {
+    background: rgba(255, 215, 0, 0.25);
+    transform: scale(1.02);
+}
+
+.shop-item .item-name {
+    font-weight: bold;
+    color: #ffd700;
+    margin-bottom: 4px;
+}
+
+.shop-item .item-price {
+    font-size: 12px;
+    color: #aaa;
+}
+
+.shop-item .item-desc {
+    font-size: 11px;
+    color: #ccc;
+    margin-top: 4px;
+}
+
+.btn-action {
+    display: block;
+    margin: 0 auto;
+    background: rgba(255, 182, 193, 0.3);
+    border: 1px solid #ffb6c1;
+    color: #fff;
+    padding: 10px 25px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.btn-action:hover {
+    background: rgba(255, 182, 193, 0.6);
+}
+
+/* Combat */
+#combat-overlay {
+    align-items: flex-start;
+    pointer-events: none;
+}
+
+#combat-hud {
+    width: 90%;
+    padding: 15px;
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    align-items: center;
+}
+
+#enemy-info {
+    background: rgba(0, 0, 0, 0.8);
+    padding: 8px 15px;
+    border-radius: 8px;
+    border: 1px solid #ff4444;
+    min-width: 200px;
+}
+
+#enemy-name {
+    color: #ff6666;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+#enemy-hp-bar {
+    width: 100%;
+    height: 8px;
+    background: #333;
+    border-radius: 4px;
+    margin-top: 5px;
+    overflow: hidden;
+}
+
+#enemy-hp-fill {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, #ff4444, #ff6666);
+    border-radius: 4px;
+    transition: width 0.3s;
+}
+
+#combat-counter {
+    background: rgba(0, 0, 0, 0.8);
+    padding: 8px 15px;
+    border-radius: 8px;
+    border: 1px solid #9b59b6;
+    color: #bb77dd;
+    font-weight: bold;
+}
+
+#combat-counter.hidden {
+    display: none;
+}
+
+/* Game Over */
+#gameover-screen {
+    background: rgba(0, 0, 0, 0.9);
+    justify-content: center;
+    align-items: center;
+}
+
+#gameover-screen.active {
+    display: flex;
+}
+
+#gameover-content {
+    text-align: center;
+    color: #fff;
+}
+
+#gameover-content h1 {
+    font-size: 42px;
+    margin-bottom: 20px;
+}
+
+#gameover-content p {
+    font-size: 18px;
+    margin-bottom: 30px;
+    color: #ccc;
+}
+
+/* Notification */
+.notification {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    padding: 15px 30px;
+    border-radius: 10px;
+    border: 1px solid #ffb6c1;
+    font-size: 16px;
+    z-index: 200;
+    animation: fadeInOut 2s forwards;
+    pointer-events: none;
+    text-align: center;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+    15% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    75% { opacity: 1; }
+    100% { opacity: 0; transform: translate(-50%, -60%) scale(0.9); }
+}
+
+/* Zone transition */
+.zone-transition {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #ffb6c1;
+    font-size: 24px;
+    animation: zoneFade 1.5s forwards;
+}
+
+@keyframes zoneFade {
+    0% { opacity: 1; }
+    50% { opacity: 1; }
+    100% { opacity: 0; pointer-events: none; }
+}
+
+/* Save indicator */
+#save-indicator {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 11px;
+}
+
+</style>
+</head>
+<body>
+    <!-- 游戏容器 -->
+    <div id="game-container">
+        <!-- 开场动画层 -->
+        <div id="intro-screen" class="screen active">
+            <canvas id="intro-canvas"></canvas>
+            <button id="skip-intro" class="btn-skip">跳过 Skip</button>
+        </div>
+
+        <!-- 游戏主画面 -->
+        <div id="game-screen" class="screen">
+            <canvas id="game-canvas"></canvas>
+            <!-- HUD -->
+            <div id="hud">
+                <div id="hud-size"><span class="hud-label">体型:</span> <span id="size-display">5mm</span></div>
+                <div id="hud-coins"><span class="hud-label">金币:</span> <span id="coins-display">0</span></div>
+                <div id="hud-hp"><span class="hud-label">HP:</span> <span id="hp-display">100/100</span></div>
+                <div id="hud-pet"><span class="hud-label">宠物:</span> <span id="pet-display">无</span></div>
+                <div id="hud-zone"><span class="hud-label">区域:</span> <span id="zone-display">起始小路</span></div>
+            </div>
+            <!-- 小地图 -->
+            <div id="minimap">
+                <canvas id="minimap-canvas"></canvas>
+            </div>
+        </div>
+
+        <!-- 对话界面 -->
+        <div id="dialogue-overlay" class="overlay hidden">
+            <div id="dialogue-box">
+                <div id="dialogue-speaker"></div>
+                <div id="dialogue-text"></div>
+                <div id="dialogue-choices"></div>
+                <div id="dialogue-input-area" class="hidden">
+                    <input type="text" id="dialogue-input" placeholder="输入你想说的话..." autocomplete="off">
+                    <button id="dialogue-send">发送</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 商店界面 -->
+        <div id="shop-overlay" class="overlay hidden">
+            <div id="shop-box">
+                <h2 id="shop-title">商店</h2>
+                <div id="shop-items"></div>
+                <button id="shop-close" class="btn-action">离开商店</button>
+            </div>
+        </div>
+
+        <!-- 战斗界面 -->
+        <div id="combat-overlay" class="overlay hidden">
+            <div id="combat-hud">
+                <div id="enemy-info">
+                    <span id="enemy-name"></span>
+                    <div id="enemy-hp-bar"><div id="enemy-hp-fill"></div></div>
+                </div>
+                <div id="combat-counter" class="hidden">
+                    <span>击败小菌: </span><span id="fungi-count">0</span>/100
+                </div>
+            </div>
+        </div>
+
+        <!-- 游戏结束 -->
+        <div id="gameover-screen" class="screen hidden">
+            <div id="gameover-content">
+                <h1 id="gameover-title"></h1>
+                <p id="gameover-text"></p>
+                <button id="gameover-restart" class="btn-action">重新开始</button>
+            </div>
+        </div>
+    </div>
+
+                                        <script>
+// assets.js - Programmatic sprite/asset generation
+const Assets = {
+    // Color palette
+    colors: {
+        pink: '#ff69b4',
+        pinkLight: '#ffb6c1',
+        pinkDark: '#c71585',
+        grass: '#4caf50',
+        grassDark: '#388e3c',
+        sand: '#f4d03f',
+        sandDark: '#d4ac0f',
+        water: '#42a5f5',
+        waterDark: '#1976d2',
+        rock: '#78909c',
+        tree: '#2e7d32',
+        treeTrunk: '#5d4037',
+        cave: '#37474f',
+        mountain: '#455a64',
+        gold: '#ffd700',
+        heart: '#ff1744',
+        enemy: '#7b1fa2',
+        fungi: '#9c27b0',
+        boss: '#b71c1c',
+    },
+
+    // Draw the pink clay player at different growth stages
+    drawPlayer(ctx, x, y, size, stage) {
+        // stage: 0-4 (tiny, small, medium, large, giant)
+        const radius = 8 + stage * 4;
+        const bodyColor = this.colors.pink;
+        
+        ctx.save();
+        ctx.translate(x, y);
+        
+        // Shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        ctx.beginPath();
+        ctx.ellipse(0, radius * 0.8, radius * 0.8, radius * 0.3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Body (soft blob shape)
+        ctx.fillStyle = bodyColor;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, radius, radius * 1.1, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Highlight
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.beginPath();
+        ctx.ellipse(-radius * 0.3, -radius * 0.3, radius * 0.3, radius * 0.25, -0.5, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Eyes
+        ctx.fillStyle = '#333';
+        ctx.beginPath();
+        ctx.arc(-radius * 0.25, -radius * 0.1, 2 + stage * 0.5, 0, Math.PI * 2);
+        ctx.arc(radius * 0.25, -radius * 0.1, 2 + stage * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Smile
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(0, radius * 0.15, radius * 0.25, 0.1, Math.PI - 0.1);
+        ctx.stroke();
+        
+        // Blush
+        ctx.fillStyle = 'rgba(255, 100, 150, 0.4)';
+        ctx.beginPath();
+        ctx.ellipse(-radius * 0.5, radius * 0.1, radius * 0.15, radius * 0.1, 0, 0, Math.PI * 2);
+        ctx.ellipse(radius * 0.5, radius * 0.1, radius * 0.15, radius * 0.1, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+        return radius;
+    },
+
+    // Draw clay drop collectible (subtle, partially hidden)
+    drawClayDrop(ctx, x, y, time) {
+        ctx.save();
+        ctx.translate(x, y);
+        const bounce = Math.sin(time * 2) * 1;
+        ctx.translate(0, bounce);
+        
+        // Very subtle glow
+        ctx.fillStyle = 'rgba(255, 182, 193, 0.15)';
+        ctx.beginPath();
+        ctx.arc(0, 0, 6, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Small clay ball
+        ctx.fillStyle = 'rgba(255, 150, 180, 0.7)';
+        ctx.beginPath();
+        ctx.arc(0, 0, 4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Tiny shine
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.beginPath();
+        ctx.arc(-1, -1, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.restore();
+    },
+
+    // Draw Giant Clay (special item)
+    drawGiantClay(ctx, x, y, time) {
+        ctx.save();
+        ctx.translate(x, y);
+        const pulse = 1 + Math.sin(time * 2) * 0.1;
+        ctx.scale(pulse, pulse);
+        
+        // Glow ring
+        ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, 18, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Big clay ball
+        const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, 14);
+        gradient.addColorStop(0, '#ffb6c1');
+        gradient.addColorStop(1, '#ff69b4');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(0, 0, 14, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Star sparkles
+        ctx.fillStyle = '#ffd700';
+        for (let i = 0; i < 4; i++) {
+            const angle = time * 2 + (i * Math.PI / 2);
+            const sx = Math.cos(angle) * 16;
+            const sy = Math.sin(angle) * 16;
+            ctx.beginPath();
+            ctx.arc(sx, sy, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        ctx.restore();
+    },
+
+    // Draw coin
+    drawCoin(ctx, x, y, time) {
+        ctx.save();
+        ctx.translate(x, y);
+        const spin = Math.abs(Math.cos(time * 2));
+        
+        ctx.fillStyle = this.colors.gold;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 5 * spin, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = '#b8860b';
+        ctx.font = '7px bold sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        if (spin > 0.3) ctx.fillText('
+</html>
+, 0, 0);
+        
+        ctx.restore();
+    },
+
+    // Draw NPC
+    drawNPC(ctx, x, y, type, time) {
+        // type: 'good', 'bad', 'super_good', 'spy'
+        ctx.save();
+        ctx.translate(x, y);
+        
+        const colors = {
+            good: '#4fc3f7',
+            bad: '#ef5350',
+            super_good: '#ffd700',
+            spy: '#4fc3f7', // looks like good
+        };
+        
+        const color = colors[type] || '#888';
+        const radius = 12;
+        
+        // Body
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.ellipse(0, 2, radius, radius * 1.2, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Eyes
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(-4, -2, 3, 0, Math.PI * 2);
+        ctx.arc(4, -2, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#333';
+        ctx.beginPath();
+        ctx.arc(-4, -2, 1.5, 0, Math.PI * 2);
+        ctx.arc(4, -2, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Heart indicator (good NPCs have heart in pocket area)
+        if (type === 'good' || type === 'super_good') {
+            ctx.fillStyle = this.colors.heart;
+            ctx.beginPath();
+            ctx.moveTo(0, 8);
+            ctx.bezierCurveTo(-3, 5, -5, 7, -5, 9);
+            ctx.bezierCurveTo(-5, 11, 0, 14, 0, 14);
+            ctx.bezierCurveTo(0, 14, 5, 11, 5, 9);
+            ctx.bezierCurveTo(5, 7, 3, 5, 0, 8);
+            ctx.fill();
+        }
+        
+        // Spy has a slightly glitching heart (flickers)
+        if (type === 'spy') {
+            if (Math.sin(time * 5) > 0.3) {
+                ctx.fillStyle = this.colors.heart;
+                ctx.globalAlpha = 0.6;
+                ctx.beginPath();
+                ctx.moveTo(0, 8);
+                ctx.bezierCurveTo(-3, 5, -5, 7, -5, 9);
+                ctx.bezierCurveTo(-5, 11, 0, 14, 0, 14);
+                ctx.bezierCurveTo(0, 14, 5, 11, 5, 9);
+                ctx.bezierCurveTo(5, 7, 3, 5, 0, 8);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+        
+        // Super good NPC has golden aura
+        if (type === 'super_good') {
+            ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, 0, radius + 5 + Math.sin(time * 3) * 2, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+        
+        // Bad NPC has angry eyebrows
+        if (type === 'bad') {
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(-7, -6);
+            ctx.lineTo(-2, -4);
+            ctx.moveTo(7, -6);
+            ctx.lineTo(2, -4);
+            ctx.stroke();
+        }
+        
+        ctx.restore();
+    },
+
+    // Draw enemy
+    drawEnemy(ctx, x, y, type, time, hp, maxHp) {
+        ctx.save();
+        ctx.translate(x, y);
+        
+        if (type === 'slime') {
+            // Small slime enemy
+            ctx.fillStyle = '#7b1fa2';
+            ctx.beginPath();
+            const squish = 1 + Math.sin(time * 4) * 0.1;
+            ctx.ellipse(0, 2, 10 * squish, 10 / squish, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(-3, -1, 2, 0, Math.PI * 2);
+            ctx.arc(3, -1, 2, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (type === 'fungi') {
+            // Fungi enemy
+            ctx.fillStyle = '#9c27b0';
+            ctx.beginPath();
+            ctx.ellipse(0, 4, 8, 6, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // Cap
+            ctx.fillStyle = '#e91e63';
+            ctx.beginPath();
+            ctx.ellipse(0, -4, 10, 8, 0, Math.PI, Math.PI * 2);
+            ctx.fill();
+            // Dots
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(-4, -6, 2, 0, Math.PI * 2);
+            ctx.arc(3, -5, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (type === 'boss') {
+            // Final boss - large monster
+            const bossRadius = 30;
+            ctx.fillStyle = '#1a1a1a';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, bossRadius, bossRadius * 1.2, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // Red eyes
+            ctx.fillStyle = '#ff0000';
+            ctx.beginPath();
+            ctx.arc(-10, -8, 5, 0, Math.PI * 2);
+            ctx.arc(10, -8, 5, 0, Math.PI * 2);
+            ctx.fill();
+            // Horns
+            ctx.fillStyle = '#4a0000';
+            ctx.beginPath();
+            ctx.moveTo(-15, -25);
+            ctx.lineTo(-8, -10);
+            ctx.lineTo(-20, -10);
+            ctx.closePath();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(15, -25);
+            ctx.lineTo(8, -10);
+            ctx.lineTo(20, -10);
+            ctx.closePath();
+            ctx.fill();
+            // Mouth
+            ctx.strokeStyle = '#ff0000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, 10, 12, 0.2, Math.PI - 0.2);
+            ctx.stroke();
+        }
+        
+        // HP bar above enemy
+        if (hp !== undefined && hp < maxHp) {
+            const barWidth = 24;
+            ctx.fillStyle = '#333';
+            ctx.fillRect(-barWidth/2, -20, barWidth, 4);
+            ctx.fillStyle = '#ff4444';
+            ctx.fillRect(-barWidth/2, -20, barWidth * (hp / maxHp), 4);
+        }
+        
+        ctx.restore();
+    },
+
+    // Draw pet companion
+    drawPet(ctx, x, y, power, time) {
+        ctx.save();
+        ctx.translate(x, y);
+        const float = Math.sin(time * 3) * 3;
+        ctx.translate(0, float);
+        
+        // Small star-shaped pet
+        const color = power > 50 ? '#ffd700' : power > 25 ? '#ff69b4' : '#87ceeb';
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+            const angle = (i * 4 * Math.PI / 5) - Math.PI / 2;
+            const r = i % 2 === 0 ? 8 : 4;
+            ctx.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
+        }
+        ctx.closePath();
+        ctx.fill();
+        
+        // Eyes
+        ctx.fillStyle = '#333';
+        ctx.beginPath();
+        ctx.arc(-2, 0, 1, 0, Math.PI * 2);
+        ctx.arc(2, 0, 1, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.restore();
+    },
+
+    // Draw water drop (desert effect)
+    drawWaterDrop(ctx, x, y, alpha) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.globalAlpha = alpha;
+        
+        ctx.fillStyle = '#42a5f5';
+        ctx.beginPath();
+        ctx.moveTo(0, -5);
+        ctx.bezierCurveTo(-4, 0, -4, 4, 0, 6);
+        ctx.bezierCurveTo(4, 4, 4, 0, 0, -5);
+        ctx.fill();
+        
+        ctx.restore();
+    },
+
+    // Tile drawing
+    drawTile(ctx, x, y, tileSize, tileType) {
+        ctx.save();
+        switch(tileType) {
+            case 'grass':
+                ctx.fillStyle = '#6ab04c';
+                ctx.fillRect(x, y, tileSize, tileSize);
+                // Random grass blades
+                ctx.fillStyle = '#4caf50';
+                ctx.fillRect(x + 5, y + 3, 2, 6);
+                ctx.fillRect(x + 12, y + 8, 2, 5);
+                ctx.fillRect(x + 20, y + 2, 2, 7);
+                break;
+            case 'sand':
+                ctx.fillStyle = '#f4d03f';
+                ctx.fillRect(x, y, tileSize, tileSize);
+                ctx.fillStyle = '#d4ac0f';
+                ctx.fillRect(x + 8, y + 12, 3, 2);
+                ctx.fillRect(x + 18, y + 5, 2, 2);
+                break;
+            case 'water':
+                ctx.fillStyle = '#42a5f5';
+                ctx.fillRect(x, y, tileSize, tileSize);
+                ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                ctx.fillRect(x + 4, y + 8, 8, 2);
+                ctx.fillRect(x + 14, y + 14, 6, 2);
+                break;
+            case 'path':
+                ctx.fillStyle = '#a0855b';
+                ctx.fillRect(x, y, tileSize, tileSize);
+                ctx.fillStyle = '#8B7355';
+                ctx.fillRect(x + 6, y + 4, 4, 3);
+                ctx.fillRect(x + 16, y + 16, 3, 3);
+                break;
+            case 'cave':
+                ctx.fillStyle = '#37474f';
+                ctx.fillRect(x, y, tileSize, tileSize);
+                ctx.fillStyle = '#263238';
+                ctx.fillRect(x + 3, y + 3, 5, 5);
+                ctx.fillRect(x + 15, y + 12, 4, 4);
+                break;
+            case 'mountain':
+                ctx.fillStyle = '#455a64';
+                ctx.fillRect(x, y, tileSize, tileSize);
+                ctx.fillStyle = '#37474f';
+                ctx.beginPath();
+                ctx.moveTo(x + 12, y + 2);
+                ctx.lineTo(x + 4, y + 20);
+                ctx.lineTo(x + 20, y + 20);
+                ctx.closePath();
+                ctx.fill();
+                break;
+            case 'wall':
+                ctx.fillStyle = '#5d4037';
+                ctx.fillRect(x, y, tileSize, tileSize);
+                ctx.strokeStyle = '#3e2723';
+                ctx.strokeRect(x + 1, y + 1, tileSize - 2, tileSize - 2);
+                break;
+            case 'tree':
+                ctx.fillStyle = '#6ab04c';
+                ctx.fillRect(x, y, tileSize, tileSize);
+                // Trunk
+                ctx.fillStyle = '#5d4037';
+                ctx.fillRect(x + 10, y + 14, 4, 10);
+                // Canopy
+                ctx.fillStyle = '#2e7d32';
+                ctx.beginPath();
+                ctx.arc(x + 12, y + 10, 8, 0, Math.PI * 2);
+                ctx.fill();
+                break;
+            case 'shop':
+                ctx.fillStyle = '#a0855b';
+                ctx.fillRect(x, y, tileSize, tileSize);
+                ctx.fillStyle = '#795548';
+                ctx.fillRect(x + 2, y + 2, tileSize - 4, tileSize - 4);
+                ctx.fillStyle = '#ffd700';
+                ctx.font = '12px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('🏪', x + 12, y + 16);
+                break;
+            case 'house_danger':
+                ctx.fillStyle = '#a0855b';
+                ctx.fillRect(x, y, tileSize, tileSize);
+                ctx.fillStyle = '#4a148c';
+                ctx.fillRect(x + 2, y + 2, tileSize - 4, tileSize - 4);
+                ctx.fillStyle = '#ff0000';
+                ctx.font = '10px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('🏚️', x + 12, y + 16);
+                break;
+            case 'portal':
+                ctx.fillStyle = '#6ab04c';
+                ctx.fillRect(x, y, tileSize, tileSize);
+                ctx.fillStyle = 'rgba(100, 200, 255, 0.5)';
+                ctx.beginPath();
+                ctx.arc(x + 12, y + 12, 8, 0, Math.PI * 2);
+                ctx.fill();
+                break;
+            case 'entrance':
+                ctx.fillStyle = '#5d4037';
+                ctx.fillRect(x, y, tileSize, tileSize);
+                // Door shape
+                ctx.fillStyle = '#3e2723';
+                ctx.fillRect(x + 8, y + 4, 16, 24);
+                // Door handle
+                ctx.fillStyle = '#ffd700';
+                ctx.beginPath();
+                ctx.arc(x + 20, y + 16, 2, 0, Math.PI * 2);
+                ctx.fill();
+                // Arrow hint
+                ctx.fillStyle = 'rgba(255, 215, 0, 0.6)';
+                ctx.font = '10px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('▼', x + 16, y + 30);
+                break;
+            case 'furniture':
+                ctx.fillStyle = '#a0855b';
+                ctx.fillRect(x, y, tileSize, tileSize);
+                // Wooden furniture block
+                ctx.fillStyle = '#6d4c41';
+                ctx.fillRect(x + 4, y + 4, tileSize - 8, tileSize - 8);
+                ctx.fillStyle = '#8d6e63';
+                ctx.fillRect(x + 6, y + 6, tileSize - 12, tileSize - 12);
+                // Decorative top line
+                ctx.fillStyle = '#4e342e';
+                ctx.fillRect(x + 4, y + 4, tileSize - 8, 3);
+                break;
+            default:
+                ctx.fillStyle = '#333';
+                ctx.fillRect(x, y, tileSize, tileSize);
+        }
+        ctx.restore();
+    }
+};
+
+
+// audio.js - Procedural game music and sound effects using Web Audio API
+const Audio = {
+    ctx: null,
+    musicGain: null,
+    sfxGain: null,
+    musicPlaying: false,
+    currentNotes: [],
+    noteIndex: 0,
+    nextNoteTime: 0,
+    tempo: 120, // BPM
+
+    // Pentatonic scale notes (frequencies) for cute/adventure feel
+    melodyNotes: [
+        523.25, 587.33, 659.25, 783.99, 880.00, // C5, D5, E5, G5, A5
+        1046.50, 987.77, 880.00, 783.99, 659.25, // C6, B5, A5, G5, E5
+        523.25, 587.33, 783.99, 880.00, 659.25, // variation
+        783.99, 659.25, 587.33, 523.25, 440.00, // descending
+    ],
+
+    bassNotes: [
+        130.81, 130.81, 164.81, 164.81, // C3, C3, E3, E3
+        174.61, 174.61, 196.00, 196.00, // F3, F3, G3, G3
+        130.81, 164.81, 196.00, 174.61, // C3, E3, G3, F3
+        220.00, 196.00, 164.81, 130.81, // A3, G3, E3, C3
+    ],
+
+    init() {
+        try {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            this.musicGain = this.ctx.createGain();
+            this.musicGain.gain.value = 0.15;
+            this.musicGain.connect(this.ctx.destination);
+
+            this.sfxGain = this.ctx.createGain();
+            this.sfxGain.gain.value = 0.3;
+            this.sfxGain.connect(this.ctx.destination);
+        } catch (e) {
+            // Audio not supported
+        }
+    },
+
+    resume() {
+        if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+    },
+
+    startMusic() {
+        if (!this.ctx || this.musicPlaying) return;
+        this.musicPlaying = true;
+        this.noteIndex = 0;
+        this.nextNoteTime = this.ctx.currentTime;
+        this.scheduleMusic();
+    },
+
+    stopMusic() {
+        this.musicPlaying = false;
+    },
+
+    scheduleMusic() {
+        if (!this.musicPlaying || !this.ctx) return;
+
+        const beatDuration = 60 / this.tempo;
+
+        while (this.nextNoteTime < this.ctx.currentTime + 0.5) {
+            const melodyNote = this.melodyNotes[this.noteIndex % this.melodyNotes.length];
+            const bassNote = this.bassNotes[this.noteIndex % this.bassNotes.length];
+
+            // Melody (square wave - 8-bit feel)
+            this.playTone(melodyNote, this.nextNoteTime, beatDuration * 0.8, 'square', 0.08);
+            // Bass (triangle wave - soft)
+            this.playTone(bassNote, this.nextNoteTime, beatDuration * 0.9, 'triangle', 0.1);
+
+            this.noteIndex++;
+            this.nextNoteTime += beatDuration;
+        }
+
+        if (this.musicPlaying) {
+            setTimeout(() => this.scheduleMusic(), 200);
+        }
+    },
+
+    playTone(freq, startTime, duration, type, volume) {
+        if (!this.ctx) return;
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = type;
+        osc.frequency.value = freq;
+
+        gain.gain.setValueAtTime(volume, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+        osc.connect(gain);
+        gain.connect(this.musicGain);
+
+        osc.start(startTime);
+        osc.stop(startTime + duration + 0.05);
+    },
+
+    // Sound effects
+    playSFX(type) {
+        if (!this.ctx) return;
+        this.resume();
+
+        switch (type) {
+            case 'collect':
+                this.playChirp(880, 1100, 0.1);
+                break;
+            case 'coin':
+                this.playChirp(1200, 1500, 0.08);
+                setTimeout(() => this.playChirp(1500, 1800, 0.08), 80);
+                break;
+            case 'hit':
+                // Pink wave attack sound - rising chirp
+                this.playChirp(600, 1200, 0.08);
+                setTimeout(() => this.playChirp(900, 1400, 0.06), 50);
+                break;
+            case 'damage':
+                this.playChirp(300, 150, 0.15);
+                this.playNoise(0.08);
+                break;
+            case 'grow':
+                this.playChirp(400, 800, 0.2);
+                break;
+            case 'portal':
+                this.playChirp(500, 1000, 0.3);
+                setTimeout(() => this.playChirp(700, 1200, 0.2), 150);
+                break;
+            case 'error':
+                this.playChirp(300, 200, 0.15);
+                setTimeout(() => this.playChirp(200, 150, 0.15), 100);
+                break;
+            case 'victory':
+                [0, 100, 200, 300, 400].forEach((delay, i) => {
+                    setTimeout(() => this.playChirp(600 + i * 100, 800 + i * 150, 0.15), delay);
+                });
+                break;
+        }
+    },
+
+    playChirp(startFreq, endFreq, duration) {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(startFreq, this.ctx.currentTime);
+        osc.frequency.linearRampToValueAtTime(endFreq, this.ctx.currentTime + duration);
+
+        gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+
+        osc.start();
+        osc.stop(this.ctx.currentTime + duration + 0.01);
+    },
+
+    playNoise(duration) {
+        if (!this.ctx) return;
+        const bufferSize = this.ctx.sampleRate * duration;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+
+        const source = this.ctx.createBufferSource();
+        const gain = this.ctx.createGain();
+        source.buffer = buffer;
+        gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+
+        source.connect(gain);
+        gain.connect(this.sfxGain);
+        source.start();
+    },
+
+    setMusicVolume(v) {
+        if (this.musicGain) this.musicGain.gain.value = v;
+    },
+
+    setSFXVolume(v) {
+        if (this.sfxGain) this.sfxGain.gain.value = v;
+    }
+};
+
+
+// world.js - Map/zone definitions and tile system
+const TILE_SIZE = 32;
+
+const ZONES = {
+    start: {
+        name: '起始小路',
+        width: 38,
+        height: 30,
+        bgColor: '#4a7c4f',
+        portals: {
+            east: { zone: 'grassland', spawnX: 2, spawnY: 15 },
+        },
+        entrances: [
+            { x: 18, y: 8, dest: { zone: 'cozy_home', spawnX: 8, spawnY: 9 } },
+        ],
+        generateMap() {
+            const map = [];
+            for (let y = 0; y < this.height; y++) {
+                map[y] = [];
+                for (let x = 0; x < this.width; x++) {
+                    if (y === 0 || y === this.height - 1 || x === 0) {
+                        map[y][x] = 'tree';
+                    } else if (x === this.width - 1) {
+                        map[y][x] = (y >= 14 && y <= 17) ? 'portal' : 'tree';
+                    } else if (x >= 5 && x <= 8 && y >= 12 && y <= 18) {
+                        map[y][x] = 'path';
+                    } else if (x >= 8 && x <= this.width - 2 && y >= 14 && y <= 17) {
+                        map[y][x] = 'path';
+                    } else {
+                        map[y][x] = 'grass';
+                    }
+                }
+            }
+            // Cozy home entrance
+            map[8][18] = 'entrance';
+            return map;
+        },
+        spawnItems() {
+            return [
+                { type: 'clay', x: 12, y: 9 },
+                { type: 'clay', x: 18, y: 21 },
+                { type: 'clay', x: 9, y: 6 },
+                { type: 'clay', x: 23, y: 11 },
+                { type: 'clay', x: 27, y: 23 },
+                { type: 'coin', x: 15, y: 5 },
+                { type: 'coin', x: 30, y: 8 },
+            ];
+        },
+        spawnNPCs() {
+            return [
+                { id: 'guide', type: 'good', x: 8, y: 15, dialogue: 'guide_start' },
+            ];
+        },
+        spawnEnemies() {
+            return [];
+        }
+    },
+
+    grassland: {
+        name: '翠绿草原',
+        width: 45,
+        height: 38,
+        bgColor: '#3d8b37',
+        portals: {
+            west: { zone: 'start', spawnX: 33, spawnY: 15 },
+            east: { zone: 'beach', spawnX: 2, spawnY: 18 },
+            south: { zone: 'desert', spawnX: 23, spawnY: 2 },
+        },
+        entrances: [
+            { x: 30, y: 8, dest: { zone: 'shop_interior', spawnX: 8, spawnY: 12 } },
+            { x: 15, y: 17, dest: { zone: 'museum', spawnX: 11, spawnY: 12 } },
+        ],
+        generateMap() {
+            const map = [];
+            // Use seeded positions for trees to avoid blocking paths
+            const treePositions = [
+                [5,5],[8,8],[11,5],[14,11],[18,6],[21,12],[26,5],[29,9],
+                [33,6],[38,11],[6,23],[12,30],[17,26],[24,30],[30,24],
+                [36,21],[39,30],[9,33],[20,33],[32,33],[41,5],[41,26]
+            ];
+            for (let y = 0; y < this.height; y++) {
+                map[y] = [];
+                for (let x = 0; x < this.width; x++) {
+                    if (y === 0 || (x === 0 && !(y >= 9 && y <= 11))) {
+                        map[y][x] = 'tree';
+                    } else if (x === this.width - 1 && !(y >= 17 && y <= 20)) {
+                        map[y][x] = 'tree';
+                    } else if (x === this.width - 1 && y >= 17 && y <= 20) {
+                        map[y][x] = 'portal';
+                    } else if (x === 0 && y >= 14 && y <= 17) {
+                        map[y][x] = 'portal';
+                    } else if (y === this.height - 1 && !(x >= 21 && x <= 24)) {
+                        map[y][x] = 'tree';
+                    } else if (y === this.height - 1 && x >= 21 && x <= 24) {
+                        map[y][x] = 'portal';
+                    } else {
+                        map[y][x] = 'grass';
+                    }
+                }
+            }
+            // Place trees at fixed positions (avoids blocking portals/paths)
+            treePositions.forEach(([tx, ty]) => {
+                if (tx > 0 && tx < this.width - 1 && ty > 0 && ty < this.height - 1) {
+                    map[ty][tx] = 'tree';
+                }
+            });
+            // Shop entrance (building you can enter)
+            map[8][30] = 'entrance';
+            // Museum entrance
+            map[17][15] = 'entrance';
+            return map;
+        },
+        spawnItems() {
+            return [
+                { type: 'clay', x: 8, y: 6 }, { type: 'clay', x: 14, y: 9 },
+                { type: 'clay', x: 21, y: 5 }, { type: 'clay', x: 27, y: 14 },
+                { type: 'clay', x: 35, y: 8 }, { type: 'clay', x: 11, y: 21 },
+                { type: 'clay', x: 18, y: 27 }, { type: 'clay', x: 24, y: 18 },
+                { type: 'clay', x: 30, y: 30 }, { type: 'clay', x: 39, y: 23 },
+                { type: 'clay', x: 6, y: 32 }, { type: 'clay', x: 15, y: 17 },
+                { type: 'coin', x: 9, y: 12 }, { type: 'coin', x: 23, y: 23 },
+                { type: 'coin', x: 33, y: 15 }, { type: 'coin', x: 41, y: 29 },
+                { type: 'coin', x: 17, y: 32 },
+            ];
+        },
+        spawnNPCs() {
+            return [
+                { id: 'farmer', type: 'good', x: 15, y: 12, dialogue: 'farmer' },
+                { id: 'stranger1', type: 'bad', x: 33, y: 27, dialogue: 'bad_npc' },
+                { id: 'spy1', type: 'spy', x: 23, y: 8, dialogue: 'spy_intro' },
+            ];
+        },
+        spawnEnemies() {
+            return [
+                { type: 'slime', x: 27, y: 21, hp: 10, maxHp: 10, damage: 1, level: 1 },
+                { type: 'slime', x: 12, y: 27, hp: 10, maxHp: 10, damage: 1, level: 1 },
+                { type: 'slime', x: 38, y: 12, hp: 10, maxHp: 10, damage: 1, level: 1 },
+                { type: 'slime', x: 8, y: 20, hp: 12, maxHp: 12, damage: 2, level: 2 },
+                { type: 'slime', x: 21, y: 30, hp: 12, maxHp: 12, damage: 2, level: 2 },
+                { type: 'slime', x: 39, y: 24, hp: 15, maxHp: 15, damage: 2, level: 2 },
+            ];
+        }
+    },
+
+    beach: {
+        name: '海边沙滩',
+        width: 42,
+        height: 30,
+        bgColor: '#87ceeb',
+        portals: {
+            west: { zone: 'grassland', spawnX: 41, spawnY: 18 },
+        },
+        entrances: [
+            { x: 8, y: 6, dest: { zone: 'hidden_cave', spawnX: 11, spawnY: 15 } },
+            { x: 24, y: 11, dest: { zone: 'library', spawnX: 9, spawnY: 12 } },
+        ],
+        generateMap() {
+            const map = [];
+            for (let y = 0; y < this.height; y++) {
+                map[y] = [];
+                for (let x = 0; x < this.width; x++) {
+                    if (x === 0 && y >= 17 && y <= 20) {
+                        map[y][x] = 'portal';
+                    } else if (y === 0 || y === this.height - 1) {
+                        map[y][x] = 'wall';
+                    } else if (x === 0 || (x >= this.width - 6)) {
+                        map[y][x] = 'water';
+                    } else if (x >= this.width - 10 && x < this.width - 6) {
+                        map[y][x] = 'sand';
+                    } else if (x < 3) {
+                        map[y][x] = 'grass';
+                    } else {
+                        // Deterministic pattern for beach terrain
+                        map[y][x] = ((x + y * 3) % 5 === 0) ? 'sand' : 'grass';
+                    }
+                }
+            }
+            // Hidden cave entrance
+            map[6][8] = 'entrance';
+            // Library entrance
+            map[11][24] = 'entrance';
+            return map;
+        },
+        spawnItems() {
+            return [
+                { type: 'coin', x: 15, y: 12 },
+                { type: 'coin', x: 23, y: 8 }, { type: 'coin', x: 12, y: 21 },
+                { type: 'coin', x: 27, y: 15 }, { type: 'coin', x: 18, y: 24 },
+                { type: 'coin', x: 30, y: 11 }, { type: 'coin', x: 9, y: 17 },
+                { type: 'clay', x: 11, y: 9 }, { type: 'clay', x: 21, y: 18 },
+                { type: 'clay', x: 29, y: 6 }, { type: 'clay', x: 17, y: 23 },
+                { type: 'clay', x: 24, y: 14 },
+            ];
+        },
+        spawnNPCs() {
+            return [
+                { id: 'fisher', type: 'good', x: 18, y: 12, dialogue: 'fisher' },
+                { id: 'super_npc1', type: 'super_good', x: 12, y: 21, dialogue: 'super_good_npc' },
+            ];
+        },
+        spawnEnemies() {
+            return [
+                { type: 'slime', x: 23, y: 8, hp: 12, maxHp: 12, damage: 2, level: 2 },
+                { type: 'slime', x: 30, y: 18, hp: 15, maxHp: 15, damage: 2, level: 2 },
+            ];
+        }
+    },
+
+    desert: {
+        name: '危险沙漠',
+        width: 45,
+        height: 38,
+        bgColor: '#c4a03f',
+        isDangerous: true,
+        portals: {
+            north: { zone: 'grassland', spawnX: 23, spawnY: 33 },
+            south: { zone: 'fungus_cave', spawnX: 23, spawnY: 2 },
+        },
+        entrances: [
+            { x: 15, y: 12, dest: { zone: 'oasis', spawnX: 8, spawnY: 2 } },
+        ],
+        generateMap() {
+            const map = [];
+            for (let y = 0; y < this.height; y++) {
+                map[y] = [];
+                for (let x = 0; x < this.width; x++) {
+                    if (y === 0 && x >= 21 && x <= 24) {
+                        map[y][x] = 'portal';
+                    } else if (y === this.height - 1 && x >= 21 && x <= 24) {
+                        map[y][x] = 'portal';
+                    } else if (y === 0 || y === this.height - 1) {
+                        map[y][x] = 'wall';
+                    } else if (x === 0 || x === this.width - 1) {
+                        map[y][x] = 'wall';
+                    } else {
+                        map[y][x] = 'sand';
+                    }
+                }
+            }
+            // Oasis entrance
+            map[12][15] = 'entrance';
+            // Some safe path spots
+            map[8][11] = 'path';
+            map[15][20] = 'path';
+            map[15][21] = 'path';
+            map[12][5] = 'path';
+            // Danger house
+            map[18][25] = 'house_danger';
+            return map;
+        },
+        spawnItems() {
+            return [
+                { type: 'clay', x: 30, y: 23 },
+                { type: 'coin', x: 8, y: 18 },
+            ];
+        },
+        spawnNPCs() {
+            return [
+                { id: 'desert_bad', type: 'bad', x: 30, y: 15, dialogue: 'bad_npc' },
+            ];
+        },
+        spawnEnemies() {
+            return [
+                { type: 'slime', x: 12, y: 9, hp: 18, maxHp: 18, damage: 3, level: 3 },
+                { type: 'slime', x: 33, y: 27, hp: 18, maxHp: 18, damage: 3, level: 3 },
+                { type: 'slime', x: 8, y: 23, hp: 20, maxHp: 20, damage: 3, level: 3 },
+                { type: 'slime', x: 38, y: 8, hp: 22, maxHp: 22, damage: 4, level: 4 },
+                { type: 'slime', x: 23, y: 30, hp: 20, maxHp: 20, damage: 3, level: 3 },
+            ];
+        }
+    },
+
+    fungus_cave: {
+        name: '菌窟深处',
+        width: 38,
+        height: 30,
+        bgColor: '#1a1a2e',
+        portals: {
+            north: { zone: 'desert', spawnX: 23, spawnY: 33 },
+            east: { zone: 'mountain', spawnX: 2, spawnY: 15 },
+        },
+        generateMap() {
+            const map = [];
+            for (let y = 0; y < this.height; y++) {
+                map[y] = [];
+                for (let x = 0; x < this.width; x++) {
+                    if (y === 0 && !(x >= 14 && x <= 16)) {
+                        map[y][x] = 'wall';
+                    } else if (y === 0 && x >= 21 && x <= 24) {
+                        map[y][x] = 'portal';
+                    } else if (x === this.width - 1 && y >= 14 && y <= 17) {
+                        map[y][x] = 'portal';
+                    } else if (y === this.height - 1 || x === 0 || x === this.width - 1) {
+                        map[y][x] = 'wall';
+                    } else {
+                        map[y][x] = 'cave';
+                    }
+                }
+            }
+            return map;
+        },
+        spawnItems() {
+            return [];
+        },
+        spawnNPCs() {
+            return [];
+        },
+        spawnEnemies() {
+            // Fungi spawn in waves, handled by combat system
+            return [
+                { type: 'fungi', x: 15, y: 12, hp: 8, maxHp: 8, damage: 1, level: 1 },
+                { type: 'fungi', x: 23, y: 18, hp: 8, maxHp: 8, damage: 1, level: 1 },
+                { type: 'fungi', x: 12, y: 23, hp: 8, maxHp: 8, damage: 1, level: 1 },
+                { type: 'fungi', x: 27, y: 9, hp: 10, maxHp: 10, damage: 2, level: 2 },
+                { type: 'fungi', x: 18, y: 15, hp: 10, maxHp: 10, damage: 2, level: 2 },
+            ];
+        }
+    },
+
+    mountain: {
+        name: '山林终极区',
+        width: 38,
+        height: 30,
+        bgColor: '#2d3436',
+        requireSize: 15000, // 15m = 15000mm
+        portals: {
+            west: { zone: 'fungus_cave', spawnX: 33, spawnY: 15 },
+        },
+        generateMap() {
+            const map = [];
+            for (let y = 0; y < this.height; y++) {
+                map[y] = [];
+                for (let x = 0; x < this.width; x++) {
+                    if (x === 0 && y >= 14 && y <= 17) {
+                        map[y][x] = 'portal';
+                    } else if (y === 0 || y === this.height - 1 || x === 0 || x === this.width - 1) {
+                        map[y][x] = 'mountain';
+                    } else if (x > this.width - 6 && y > 7 && y < 13) {
+                        map[y][x] = 'cave'; // Boss arena area
+                    } else {
+                        // Ensure a clear path from spawn to boss
+                        if (y >= 9 && y <= 11) {
+                            map[y][x] = 'cave'; // Clear corridor
+                        } else {
+                            map[y][x] = ((x + y) % 7 === 0) ? 'mountain' : 'cave';
+                        }
+                    }
+                }
+            }
+            return map;
+        },
+        spawnItems() {
+            return [
+                { type: 'clay', x: 8, y: 8 },
+                { type: 'clay', x: 8, y: 23 },
+            ];
+        },
+        spawnNPCs() {
+            return [];
+        },
+        spawnEnemies() {
+            return [
+                { type: 'boss', x: 30, y: 15, hp: 200, maxHp: 200, damage: 8, isBoss: true, level: 5 },
+            ];
+        }
+    },
+
+    // === SUB-MAPS (Indoor/Small areas) ===
+    
+    shop_interior: {
+        name: '粘土补给商店',
+        width: 18,
+        height: 15,
+        bgColor: '#3d2b1f',
+        isSubMap: true,
+        parentZone: 'grassland',
+        parentSpawn: { x: 30, y: 9 },
+        portals: {
+            south: { zone: 'grassland', spawnX: 30, spawnY: 9 },
+        },
+        generateMap() {
+            const map = [];
+            for (let y = 0; y < this.height; y++) {
+                map[y] = [];
+                for (let x = 0; x < this.width; x++) {
+                    if (y === this.height - 1 && x >= 8 && x <= 9) {
+                        map[y][x] = 'portal';
+                    } else if (y === 0 || y === this.height - 1 || x === 0 || x === this.width - 1) {
+                        map[y][x] = 'wall';
+                    } else if (y === 1 && x >= 2 && x <= 9) {
+                        map[y][x] = 'shop'; // Counter
+                    } else {
+                        map[y][x] = 'path';
+                    }
+                }
+            }
+            return map;
+        },
+        spawnItems() {
+            return [];
+        },
+        spawnNPCs() {
+            return [
+                { id: 'shopkeeper', type: 'good', x: 8, y: 3, dialogue: 'shopkeeper' },
+            ];
+        },
+        spawnEnemies() { return []; }
+    },
+
+    hidden_cave: {
+        name: '隐藏洞穴',
+        width: 23,
+        height: 18,
+        bgColor: '#1a1a2e',
+        isSubMap: true,
+        parentZone: 'beach',
+        parentSpawn: { x: 8, y: 8 },
+        portals: {
+            south: { zone: 'beach', spawnX: 8, spawnY: 8 },
+        },
+        generateMap() {
+            const map = [];
+            for (let y = 0; y < this.height; y++) {
+                map[y] = [];
+                for (let x = 0; x < this.width; x++) {
+                    if (y === this.height - 1 && x >= 9 && x <= 12) {
+                        map[y][x] = 'portal';
+                    } else if (y === 0 || y === this.height - 1 || x === 0 || x === this.width - 1) {
+                        map[y][x] = 'wall';
+                    } else {
+                        map[y][x] = 'cave';
+                    }
+                }
+            }
+            return map;
+        },
+        spawnItems() {
+            return [
+                { type: 'clay', x: 5, y: 5 }, { type: 'clay', x: 11, y: 8 },
+                { type: 'clay', x: 17, y: 5 }, { type: 'clay', x: 8, y: 12 },
+                { type: 'clay', x: 14, y: 11 }, { type: 'clay', x: 18, y: 14 },
+                { type: 'coin', x: 11, y: 3 }, { type: 'coin', x: 15, y: 9 },
+            ];
+        },
+        spawnNPCs() {
+            return [
+                { id: 'cave_hermit', type: 'super_good', x: 11, y: 5, dialogue: 'cave_hermit' },
+            ];
+        },
+        spawnEnemies() {
+            return [
+                { type: 'slime', x: 6, y: 11, hp: 15, maxHp: 15, damage: 2, level: 2 },
+                { type: 'slime', x: 15, y: 8, hp: 15, maxHp: 15, damage: 2, level: 2 },
+            ];
+        }
+    },
+
+    oasis: {
+        name: '沙漠绿洲',
+        width: 18,
+        height: 18,
+        bgColor: '#2e7d32',
+        isSubMap: true,
+        parentZone: 'desert',
+        parentSpawn: { x: 15, y: 12 },
+        portals: {
+            north: { zone: 'desert', spawnX: 15, spawnY: 14 },
+        },
+        generateMap() {
+            const map = [];
+            for (let y = 0; y < this.height; y++) {
+                map[y] = [];
+                for (let x = 0; x < this.width; x++) {
+                    if (y === 0 && x >= 5 && x <= 6) {
+                        map[y][x] = 'portal';
+                    } else if (y === 0 || y === this.height - 1 || x === 0 || x === this.width - 1) {
+                        map[y][x] = 'tree';
+                    } else if ((x >= 4 && x <= 7) && (y >= 5 && y <= 7)) {
+                        map[y][x] = 'water';
+                    } else {
+                        map[y][x] = 'grass';
+                    }
+                }
+            }
+            return map;
+        },
+        spawnItems() {
+            return [
+                { type: 'clay', x: 3, y: 5 }, { type: 'clay', x: 14, y: 6 },
+                { type: 'clay', x: 5, y: 14 }, { type: 'clay', x: 12, y: 12 },
+                { type: 'coin', x: 8, y: 3 }, { type: 'coin', x: 14, y: 14 },
+            ];
+        },
+        spawnNPCs() {
+            return [
+                { id: 'oasis_npc', type: 'good', x: 9, y: 5, dialogue: 'oasis_npc' },
+            ];
+        },
+        spawnEnemies() { return []; }
+    },
+
+    spy_hideout: {
+        name: '假商店（陷阱！）',
+        width: 15,
+        height: 12,
+        bgColor: '#2c0033',
+        isSubMap: true,
+        parentZone: 'grassland',
+        parentSpawn: { x: 23, y: 9 },
+        portals: {
+            south: { zone: 'grassland', spawnX: 23, spawnY: 9 },
+        },
+        generateMap() {
+            const map = [];
+            for (let y = 0; y < this.height; y++) {
+                map[y] = [];
+                for (let x = 0; x < this.width; x++) {
+                    if (y === this.height - 1 && x >= 6 && x <= 8) {
+                        map[y][x] = 'portal';
+                    } else if (y === 0 || y === this.height - 1 || x === 0 || x === this.width - 1) {
+                        map[y][x] = 'wall';
+                    } else {
+                        map[y][x] = 'path';
+                    }
+                }
+            }
+            return map;
+        },
+        spawnItems() { return []; },
+        spawnNPCs() {
+            return [
+                { id: 'fake_shopkeeper', type: 'bad', x: 8, y: 3, dialogue: 'fake_shopkeeper' },
+            ];
+        },
+        spawnEnemies() {
+            return [
+                { type: 'slime', x: 5, y: 6, hp: 18, maxHp: 18, damage: 3, level: 3 },
+                { type: 'slime', x: 11, y: 6, hp: 18, maxHp: 18, damage: 3, level: 3 },
+            ];
+        }
+    },
+
+    // === NEW BUILDINGS ===
+
+    cozy_home: {
+        name: '温暖小屋',
+        width: 15,
+        height: 12,
+        bgColor: '#5d4037',
+        isSubMap: true,
+        parentZone: 'start',
+        parentSpawn: { x: 18, y: 9 },
+        portals: {
+            south: { zone: 'start', spawnX: 18, spawnY: 9 },
+        },
+        generateMap() {
+            const map = [];
+            for (let y = 0; y < this.height; y++) {
+                map[y] = [];
+                for (let x = 0; x < this.width; x++) {
+                    if (y === this.height - 1 && x >= 6 && x <= 8) {
+                        map[y][x] = 'portal';
+                    } else if (y === 0 || y === this.height - 1 || x === 0 || x === this.width - 1) {
+                        map[y][x] = 'wall';
+                    } else if (x === 3 && y === 3) {
+                        map[y][x] = 'furniture'; // bed
+                    } else if (x === 11 && y === 3) {
+                        map[y][x] = 'furniture'; // table
+                    } else if (x === 8 && y === 1) {
+                        map[y][x] = 'wall'; // fireplace
+                    } else {
+                        map[y][x] = 'path';
+                    }
+                }
+            }
+            return map;
+        },
+        spawnItems() {
+            return [
+                { type: 'clay', x: 5, y: 8 },
+                { type: 'coin', x: 11, y: 8 },
+            ];
+        },
+        spawnNPCs() {
+            return [
+                { id: 'home_npc', type: 'good', x: 8, y: 5, dialogue: 'home_resident' },
+            ];
+        },
+        spawnEnemies() { return []; }
+    },
+
+    museum: {
+        name: '粘土博物馆',
+        width: 21,
+        height: 15,
+        bgColor: '#37474f',
+        isSubMap: true,
+        parentZone: 'grassland',
+        parentSpawn: { x: 15, y: 18 },
+        portals: {
+            south: { zone: 'grassland', spawnX: 15, spawnY: 18 },
+        },
+        generateMap() {
+            const map = [];
+            for (let y = 0; y < this.height; y++) {
+                map[y] = [];
+                for (let x = 0; x < this.width; x++) {
+                    if (y === this.height - 1 && x >= 9 && x <= 11) {
+                        map[y][x] = 'portal';
+                    } else if (y === 0 || y === this.height - 1 || x === 0 || x === this.width - 1) {
+                        map[y][x] = 'wall';
+                    } else if ((x === 5 || x === 11 || x === 17) && y === 3) {
+                        map[y][x] = 'furniture'; // display cases
+                    } else if ((x === 5 || x === 11 || x === 17) && y === 8) {
+                        map[y][x] = 'furniture'; // display cases row 2
+                    } else {
+                        map[y][x] = 'path';
+                    }
+                }
+            }
+            return map;
+        },
+        spawnItems() {
+            return [
+                { type: 'clay', x: 8, y: 5 },
+                { type: 'clay', x: 14, y: 5 },
+                { type: 'coin', x: 8, y: 9 },
+                { type: 'coin', x: 14, y: 9 },
+            ];
+        },
+        spawnNPCs() {
+            return [
+                { id: 'curator', type: 'good', x: 11, y: 6, dialogue: 'museum_curator' },
+            ];
+        },
+        spawnEnemies() { return []; }
+    },
+
+    library: {
+        name: '知识图书馆',
+        width: 18,
+        height: 15,
+        bgColor: '#4e342e',
+        isSubMap: true,
+        parentZone: 'beach',
+        parentSpawn: { x: 24, y: 12 },
+        portals: {
+            south: { zone: 'beach', spawnX: 24, spawnY: 12 },
+        },
+        generateMap() {
+            const map = [];
+            for (let y = 0; y < this.height; y++) {
+                map[y] = [];
+                for (let x = 0; x < this.width; x++) {
+                    if (y === this.height - 1 && x >= 5 && x <= 6) {
+                        map[y][x] = 'portal';
+                    } else if (y === 0 || y === this.height - 1 || x === 0 || x === this.width - 1) {
+                        map[y][x] = 'wall';
+                    } else if ((x === 3 || x === 8 || x === 12) && y >= 3 && y <= 6) {
+                        map[y][x] = 'furniture'; // bookshelves
+                    } else {
+                        map[y][x] = 'path';
+                    }
+                }
+            }
+            return map;
+        },
+        spawnItems() {
+            return [
+                { type: 'clay', x: 5, y: 9 },
+                { type: 'clay', x: 14, y: 9 },
+                { type: 'coin', x: 9, y: 5 },
+            ];
+        },
+        spawnNPCs() {
+            return [
+                { id: 'librarian', type: 'good', x: 9, y: 8, dialogue: 'librarian' },
+            ];
+        },
+        spawnEnemies() { return []; }
+    }
+};
+
+// World management
+const World = {
+    currentZone: null,
+    currentMap: null,
+    items: [],
+    waterDrops: [], // desert effect
+
+    loadZone(zoneName) {
+        const zone = ZONES[zoneName];
+        if (!zone) return false;
+        
+        this.currentZone = zoneName;
+        this.currentMap = zone.generateMap();
+        this.items = zone.spawnItems();
+        this.waterDrops = [];
+        
+        return true;
+    },
+
+    getTile(x, y) {
+        if (!this.currentMap) return 'wall';
+        if (y < 0 || y >= this.currentMap.length || x < 0 || x >= this.currentMap[0].length) {
+            return 'wall';
+        }
+        return this.currentMap[y][x];
+    },
+
+    isWalkable(tileX, tileY) {
+        const tile = this.getTile(tileX, tileY);
+        return tile !== 'wall' && tile !== 'tree' && tile !== 'mountain' && tile !== 'water' && tile !== 'portal' && tile !== 'entrance' && tile !== 'furniture';
+    },
+
+    isPortal(tileX, tileY) {
+        const tile = this.getTile(tileX, tileY);
+        return tile === 'portal' || tile === 'entrance';
+    },
+
+    getPortalDestination(tileX, tileY) {
+        const zone = ZONES[this.currentZone];
+        if (!zone || !zone.portals) return null;
+        
+        const map = this.currentMap;
+        const tile = this.getTile(tileX, tileY);
+        
+        // Check for entrance tiles (sub-map entrances stored in zone.entrances)
+        if (tile === 'entrance' && zone.entrances) {
+            for (const entrance of zone.entrances) {
+                if (entrance.x === tileX && entrance.y === tileY) {
+                    return entrance.dest;
+                }
+            }
+        }
+        
+        // Edge-based portals
+        if (tileX === 0) return zone.portals.west;
+        if (tileX === map[0].length - 1) return zone.portals.east;
+        if (tileY === 0) return zone.portals.north;
+        if (tileY === map.length - 1) return zone.portals.south;
+        return null;
+    },
+
+    isDesert() {
+        return ZONES[this.currentZone]?.isDangerous === true;
+    },
+
+    addWaterDrop(x, y) {
+        this.waterDrops.push({ x, y, alpha: 1.0, time: 0 });
+    },
+
+    updateWaterDrops(dt) {
+        for (let i = this.waterDrops.length - 1; i >= 0; i--) {
+            this.waterDrops[i].alpha -= dt * 0.3;
+            this.waterDrops[i].time += dt;
+            if (this.waterDrops[i].alpha <= 0) {
+                this.waterDrops.splice(i, 1);
+            }
+        }
+    },
+
+    collectItem(tileX, tileY) {
+        for (let i = this.items.length - 1; i >= 0; i--) {
+            if (this.items[i].x === tileX && this.items[i].y === tileY) {
+                const item = this.items.splice(i, 1)[0];
+                return item;
+            }
+        }
+        return null;
+    },
+
+    // Check if near an item (within 1 tile)
+    getNearbyItem(tileX, tileY) {
+        for (let i = 0; i < this.items.length; i++) {
+            const dx = Math.abs(this.items[i].x - tileX);
+            const dy = Math.abs(this.items[i].y - tileY);
+            if (dx <= 0 && dy <= 0) {
+                return i;
+            }
+        }
+        return -1;
+    }
+};
+
+
+// player.js - Player state, movement, and growth
+const Player = {
+    // Position (in tile coordinates)
+    tileX: 4,
+    tileY: 10,
+    // Pixel position for smooth movement
+    pixelX: 0,
+    pixelY: 0,
+    // Movement
+    speed: 3.0, // tiles per second base (fast movement)
+    moving: false,
+    targetX: 0,
+    targetY: 0,
+    moveProgress: 0,
+    lastMoveTime: 0,
+    direction: 'down', // up, down, left, right
+    
+    // Stats
+    sizeMM: 5, // starts at 5mm
+    maxHP: 100,
+    hp: 100,
+    coins: 0,
+    attackPower: 5,
+    
+    // Growth stage (0-4): tiny, small, medium, large, giant
+    get stage() {
+        if (this.sizeMM >= 15000) return 4;
+        if (this.sizeMM >= 5000) return 3;
+        if (this.sizeMM >= 1000) return 2;
+        if (this.sizeMM >= 100) return 1;
+        return 0;
+    },
+    
+    // Pet
+    hasPet: false,
+    petPower: 0,
+    
+    // Flags
+    hasGiantClay: false,
+    fungiDefeated: 0,
+    fungiChallengeActive: false,
+    fungiChallengeComplete: false,
+    fungiChallengeTriggered: false,
+    bossDefeated: false,
+    friendRescued: false,
+    visitedZones: new Set(['start']),
+    
+    // Desert step tracking
+    lastDesertTile: null,
+
+    init() {
+        this.pixelX = this.tileX * TILE_SIZE + TILE_SIZE / 2;
+        this.pixelY = this.tileY * TILE_SIZE + TILE_SIZE / 2;
+        this.targetX = this.pixelX;
+        this.targetY = this.pixelY;
+    },
+
+    // Get effective speed (slower when tiny, faster when big)
+    getSpeed() {
+        const stageBonus = this.stage * 0.3;
+        return (this.speed + stageBonus) * TILE_SIZE;
+    },
+
+    // Growth
+    grow(amount) {
+        this.sizeMM = Math.max(1, this.sizeMM + amount);
+        // Update attack power based on size
+        this.attackPower = 5 + Math.floor(this.sizeMM / 100) * 2 + this.petPower;
+    },
+
+    shrink(amount) {
+        this.sizeMM = Math.max(1, this.sizeMM - amount);
+        if (this.sizeMM <= 1) {
+            // Game over check
+            return true;
+        }
+        return false;
+    },
+
+    // Take damage
+    takeDamage(amount) {
+        this.hp = Math.max(0, this.hp - amount);
+        return this.hp <= 0;
+    },
+
+    heal(amount) {
+        this.hp = Math.min(this.maxHP, this.hp + amount);
+    },
+
+    // Movement
+    tryMove(dx, dy) {
+        if (this.moving) return false;
+        
+        const newTileX = this.tileX + dx;
+        const newTileY = this.tileY + dy;
+        
+        // Set direction
+        if (dx > 0) this.direction = 'right';
+        else if (dx < 0) this.direction = 'left';
+        else if (dy > 0) this.direction = 'down';
+        else if (dy < 0) this.direction = 'up';
+        
+        if (!World.isWalkable(newTileX, newTileY)) {
+            // Check if it's a portal
+            if (World.isPortal(newTileX, newTileY)) {
+                return { type: 'portal', tileX: newTileX, tileY: newTileY };
+            }
+            return false;
+        }
+        
+        this.moving = true;
+        this.targetX = newTileX * TILE_SIZE + TILE_SIZE / 2;
+        this.targetY = newTileY * TILE_SIZE + TILE_SIZE / 2;
+        this.moveProgress = 0;
+        this.tileX = newTileX;
+        this.tileY = newTileY;
+        
+        return { type: 'move' };
+    },
+
+    update(dt) {
+        if (this.moving) {
+            const speed = this.getSpeed();
+            const dx = this.targetX - this.pixelX;
+            const dy = this.targetY - this.pixelY;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            if (dist < 1) {
+                this.moving = false;
+                this.pixelX = this.targetX;
+                this.pixelY = this.targetY;
+            } else {
+                const step = Math.min(speed * dt, dist);
+                this.pixelX += (dx / dist) * step;
+                this.pixelY += (dy / dist) * step;
+            }
+        }
+    },
+
+    // Get display size text
+    getSizeDisplay() {
+        if (this.sizeMM >= 10000) {
+            return (this.sizeMM / 1000).toFixed(1) + 'm';
+        } else if (this.sizeMM >= 1000) {
+            return (this.sizeMM / 10).toFixed(0) + 'cm';
+        }
+        return this.sizeMM + 'mm';
+    },
+
+    // Serialization for save
+    serialize() {
+        return {
+            tileX: this.tileX,
+            tileY: this.tileY,
+            sizeMM: this.sizeMM,
+            hp: this.hp,
+            maxHP: this.maxHP,
+            coins: this.coins,
+            hasPet: this.hasPet,
+            petPower: this.petPower,
+            hasGiantClay: this.hasGiantClay,
+            fungiDefeated: this.fungiDefeated,
+            fungiChallengeComplete: this.fungiChallengeComplete,
+            bossDefeated: this.bossDefeated,
+            friendRescued: this.friendRescued,
+            visitedZones: [...this.visitedZones],
+            currentZone: World.currentZone,
+        };
+    },
+
+    deserialize(data) {
+        if (!data) return;
+        this.tileX = data.tileX;
+        this.tileY = data.tileY;
+        this.sizeMM = data.sizeMM;
+        this.hp = data.hp;
+        this.maxHP = data.maxHP || 100;
+        this.coins = data.coins;
+        this.hasPet = data.hasPet;
+        this.petPower = data.petPower;
+        this.hasGiantClay = data.hasGiantClay;
+        this.fungiDefeated = data.fungiDefeated;
+        this.fungiChallengeComplete = data.fungiChallengeComplete || false;
+        this.bossDefeated = data.bossDefeated;
+        this.friendRescued = data.friendRescued;
+        this.visitedZones = new Set(data.visitedZones || ['start']);
+        this.pixelX = this.tileX * TILE_SIZE + TILE_SIZE / 2;
+        this.pixelY = this.tileY * TILE_SIZE + TILE_SIZE / 2;
+        this.targetX = this.pixelX;
+        this.targetY = this.pixelY;
+    }
+};
+
+
+// npc.js - NPC system with dialogue trees
+const NPCSystem = {
+    npcs: [],
+    activeDialogue: null,
+    
+    // Dialogue trees
+    dialogues: {
+        guide_start: {
+            speaker: '向导小粘土',
+            text: '欢迎来到粘土世界！你是那个勇敢的小粉粘土吧？你的好朋友被山林深处的大怪兽抓走了...\n你需要不断收集粘土成长到15米，才能打败怪兽！',
+            choices: [
+                { text: '我该怎么成长？', next: 'guide_growth' },
+                { text: '大怪兽在哪里？', next: 'guide_boss' },
+                { text: '谢谢你！我出发了！', next: null, effect: { coins: 5 } },
+            ]
+        },
+        guide_growth: {
+            speaker: '向导小粘土',
+            text: '收集散落在地上的粉色粘土球，每个可以让你长大1毫米。\n在菌窟深处打败100只小菌，可以获得传说中的巨型粘土，一下子长大10米！\n但要小心沙漠，每走一步都会缩小1毫米哦！',
+            choices: [
+                { text: '还有什么要注意的？', next: 'guide_warning' },
+                { text: '明白了，出发！', next: null },
+            ]
+        },
+        guide_boss: {
+            speaker: '向导小粘土',
+            text: '大怪兽藏在东边山林的最深处。但你现在太小了，只有长到15米才能挑战它！\n从这里往东走，穿过草原、海边，再往南穿过沙漠和菌窟，就能到达山林。',
+            choices: [
+                { text: '我该怎么成长？', next: 'guide_growth' },
+                { text: '我会变强的！', next: null },
+            ]
+        },
+        guide_warning: {
+            speaker: '向导小粘土',
+            text: '⚠️ 特别注意！\n• 有爱心标记的NPC是好人，可以放心交流\n• 没有爱心的会攻击你！\n• 有些NPC看起来有爱心，但爱心会闪烁——那是间谍！\n• 间谍会带你去假商店，千万别跟着去！',
+            choices: [
+                { text: '怎么分辨间谍？', next: 'guide_spy' },
+                { text: '我会小心的！', next: null, effect: { coins: 3 } },
+            ]
+        },
+        guide_spy: {
+            speaker: '向导小粘土',
+            text: '间谍的爱心标记会不稳定地闪烁，仔细观察就能发现。\n而且间谍说话特别热情，会主动邀请你去"超好的商店"。\n如果你被骗进假商店，会损失金币和体型！记住：真正的好人不会急着带你去商店。',
+            choices: [
+                { text: '谢谢提醒！', next: null, effect: { coins: 2 } },
+            ]
+        },
+        
+        farmer: {
+            speaker: '农夫粘土',
+            text: '哟！小家伙，你好小啊~ 东边的草丛里藏着很多粘土球哦。\n往南走有个危险的沙漠，如果你不够大，不建议去那里。',
+            choices: [
+                { text: '南边有什么？', next: 'farmer_south' },
+                { text: '有没有什么好东西给我？', next: 'farmer_gift' },
+                { text: '再见！', next: null },
+            ],
+            allowTyping: true,
+            keywords: {
+                '帮助|help|怎么办': { text: '多捡粘土球就能变大啦！这里到处都有散落的粘土。', effect: null },
+                '商店|买|购物': { text: '草原东边有个正规商店，门口有金色标记的，很安全。', effect: null },
+                '朋友|friend': { text: '你的朋友...我听说被绑在山林深处了。你要加油啊！', effect: { coins: 2 } },
+            }
+        },
+        farmer_south: {
+            speaker: '农夫粘土',
+            text: '南边是一片大沙漠，那里很危险！每走一步你都会缩小1毫米。\n不过穿过沙漠就是传说中的菌窟，听说里面有能让你瞬间变巨大的宝物...',
+            choices: [
+                { text: '我会准备好再去的。', next: null },
+            ]
+        },
+        farmer_gift: {
+            speaker: '农夫粘土',
+            text: '嗯...你这么小一个还挺有勇气的。给你几个金币吧，去商店买点补给！',
+            choices: [
+                { text: '太感谢了！', next: null, effect: { coins: 10 } },
+            ]
+        },
+        
+        fisher: {
+            speaker: '渔夫粘土',
+            text: '海边的沙滩上经常冲上来金币，多找找！\n这里的海风很舒服，但远处有些小怪物，小心点。',
+            choices: [
+                { text: '有什么冒险建议吗？', next: 'fisher_advice' },
+                { text: '谢谢！', next: null },
+            ],
+            allowTyping: true,
+            keywords: {
+                '宠物|pet|伙伴': { text: '听说海边有位神秘的金色朋友，会送你一只小宠物呢！往南边沙滩找找看。', effect: null },
+                '沙漠|desert': { text: '沙漠很危险，建议你至少长到100毫米再去。在商店买些恢复道具也有帮助。', effect: null },
+            }
+        },
+        fisher_advice: {
+            speaker: '渔夫粘土',
+            text: '建议你先在草原和海边多收集粘土和金币，至少长到100毫米再去沙漠。\n记得在商店买恢复药水，沙漠里会用到的！',
+            choices: [
+                { text: '好的，我会准备充分的。', next: null, effect: { coins: 5 } },
+            ]
+        },
+
+        super_good_npc: {
+            speaker: '✨ 神秘金色旅者',
+            text: '啊...我感应到了你身上的勇气之光！小小的身体里藏着大大的决心呢~\n我要送你一份礼物：一只忠诚的小星宠！它会在战斗中帮助你！',
+            choices: [
+                { text: '真的吗？太好了！', next: 'super_good_gift' },
+                { text: '为什么要帮我？', next: 'super_good_why' },
+            ]
+        },
+        super_good_gift: {
+            speaker: '✨ 神秘金色旅者',
+            text: '小星宠会跟随你战斗，每次攻击额外造成伤害！\n而且它还能帮你感应周围的危险。好好照顾它哦~',
+            choices: [
+                { text: '我会好好照顾它的！谢谢！', next: null, effect: { pet: true, petPower: 10 } },
+            ]
+        },
+        super_good_why: {
+            speaker: '✨ 神秘金色旅者',
+            text: '因为这个世界需要勇敢的人啊。你的朋友在等你，而我相信你能做到。\n拿着这份力量，去救你的朋友吧！',
+            choices: [
+                { text: '谢谢你的信任！', next: null, effect: { pet: true, petPower: 10 } },
+            ]
+        },
+
+        spy_intro: {
+            speaker: '热情的路人',
+            text: '哎呀~小可爱！你好你好！我认识你！你是那个要救朋友的勇敢小粘土对吧？\n我知道一个超级棒的商店，里面的东西又便宜又好！要不要我带你去？',
+            choices: [
+                { text: '好啊，带我去！', next: 'spy_trap' },
+                { text: '不了，谢谢。', next: 'spy_decline' },
+                { text: '（仔细观察对方...）', next: 'spy_observe' },
+            ],
+            allowTyping: true,
+            keywords: {
+                '间谍|spy|骗子|假': { text: '什......什么？！你怎么知道的！？', next: 'spy_caught' },
+                '爱心|heart|标记': { text: '啊，我的爱心标记？它...它当然在啊！（心虚地笑）', next: 'spy_nervous' },
+                '不|no|走开|拒绝': { text: '欸？不要这么冷淡嘛~ 真的是好商店啦~', next: 'spy_decline' },
+            }
+        },
+        spy_trap: {
+            speaker: '⚠️ 间谍暴露！',
+            text: '哈哈哈！上当了吧！这根本不是什么好商店！\n欢迎来到"坑你没商量"假商店！\n💀 你损失了 20金币 和 50毫米体型！',
+            choices: [
+                { text: '可恶...下次不会再上当了！', next: null, effect: { coins: -20, size: -50 } },
+            ]
+        },
+        spy_decline: {
+            speaker: '热情的路人',
+            text: '啊...这样啊，好吧好吧。那你自己小心点哦~\n（你注意到对方的爱心标记似乎在闪烁...明智的选择！）',
+            choices: [
+                { text: '（离开）', next: null },
+            ]
+        },
+        spy_observe: {
+            speaker: '系统提示',
+            text: '你仔细观察了对方...\n💡 发现：对方胸口的爱心标记在不规律地闪烁！这是间谍的特征！\n真正的好人NPC爱心标记是稳定的。',
+            choices: [
+                { text: '你是间谍！', next: 'spy_caught' },
+                { text: '（默默走开）', next: null, effect: { coins: 5 } },
+            ]
+        },
+        spy_caught: {
+            speaker: '间谍粘土',
+            text: '可恶！被你发现了！没想到你这么机灵...\n算了算了，我走！下次可不会这么容易被识破！',
+            choices: [
+                { text: '哼，别想骗我！', next: null, effect: { coins: 10 } },
+            ]
+        },
+        spy_nervous: {
+            speaker: '热情的路人',
+            text: '（你注意到对方的爱心标记确实在闪烁，不太正常...）\n对方似乎有些紧张了。',
+            choices: [
+                { text: '你是间谍吧！', next: 'spy_caught' },
+                { text: '算了，再见。', next: null },
+            ]
+        },
+
+        bad_npc: {
+            speaker: '⚠️ 敌意粘土',
+            text: '嘿！这是我的地盘！交出你的金币，不然别想好过！',
+            choices: [
+                { text: '我不怕你！（战斗）', next: null, effect: { combat: 'bad_npc_fight' } },
+                { text: '（赶紧逃跑）', next: null, effect: { hp: -10 } },
+            ]
+        },
+
+        // Danger house dialogue
+        danger_house: {
+            speaker: '⚠️ 危险！',
+            text: '你进入了一间可疑的大房子...里面突然冲出来几个大粘土，抢走了你身上的粘土！\n💀 体型 -100毫米！',
+            choices: [
+                { text: '太可怕了！赶紧逃！', next: null, effect: { size: -100 } },
+            ]
+        },
+
+        // Fungi cave challenge
+        fungi_challenge: {
+            speaker: '洞穴之声',
+            text: '你来到了传说中的菌窟...这里弥漫着诡异的紫色雾气。\n前方有大量的小菌怪守护着传说中的【巨型粘土】！\n击败它们全部才能获得巨型粘土（+10米体型）！\n但如果你害怕，现在还可以逃跑...',
+            choices: [
+                { text: '我要挑战！击败它们！', next: null, effect: { startFungiChallenge: true } },
+                { text: '太可怕了...我逃跑。', next: 'fungi_flee' },
+            ]
+        },
+        fungi_flee: {
+            speaker: '系统',
+            text: '你选择了逃跑...\n⚠️ 巨型粘土将永远无法获得！你只能靠一点一点收集小粘土来成长了。\n游戏难度大幅提升！',
+            choices: [
+                { text: '（含泪离开）', next: null, effect: { fungiChallengeComplete: true } },
+            ]
+        },
+
+        // Boss dialogue
+        boss_encounter: {
+            speaker: '🔥 山林巨兽',
+            text: '吼！！！又有一个不自量力的小东西来了！\n你以为你能救你的朋友？做梦！\n来吧，让我看看你到底有多强！',
+            choices: [
+                { text: '为了我的朋友，我不会退缩！', next: null, effect: { startBoss: true } },
+            ]
+        },
+
+        // Victory
+        victory: {
+            speaker: '🎉 好朋友',
+            text: '呜呜呜...你真的来救我了！我就知道你一定会来的！\n谢谢你...谢谢你一路上的勇敢和坚持！\n我们一起回家吧！',
+            choices: [
+                { text: '走！我们回家！', next: null, effect: { victory: true } },
+            ]
+        },
+
+        // Sub-map NPC dialogues
+        shopkeeper: {
+            speaker: '店主粘土',
+            text: '欢迎光临粘土补给站！这里的东西都是正品，放心购买~\n你看起来是在冒险的路上吧？需要什么尽管说！',
+            choices: [
+                { text: '我要买东西！', next: null, effect: { openShop: true } },
+                { text: '有什么推荐的吗？', next: 'shopkeeper_rec' },
+                { text: '再见！', next: null },
+            ]
+        },
+        shopkeeper_rec: {
+            speaker: '店主粘土',
+            text: '如果你要去沙漠的话，一定要买防沙护盾！那里每走一步都会缩小。\n高级粘土块也很值得，一下子能长50毫米呢！',
+            choices: [
+                { text: '好的，让我看看商品！', next: null, effect: { openShop: true } },
+                { text: '谢谢建议！', next: null },
+            ]
+        },
+
+        cave_hermit: {
+            speaker: '✨ 洞穴隐士',
+            text: '嘘...你找到了这个秘密洞穴！很少有人能发现这里。\n作为奖励，我可以强化你的宠物...如果你有宠物的话。',
+            choices: [
+                { text: '请帮我强化！', next: 'cave_hermit_boost' },
+                { text: '这里有什么秘密？', next: 'cave_hermit_secret' },
+            ]
+        },
+        cave_hermit_boost: {
+            speaker: '✨ 洞穴隐士',
+            text: '好的...感受这股力量吧！\n⭐ 宠物战力 +15！',
+            choices: [
+                { text: '太棒了！谢谢！', next: null, effect: { petPower: 15 } },
+            ]
+        },
+        cave_hermit_secret: {
+            speaker: '✨ 洞穴隐士',
+            text: '这个洞穴连接着粘土世界的能量源。在这里待一会，你会感觉到力量在增长...\n而且这里的粘土球比外面的更浓缩哦！',
+            choices: [
+                { text: '帮我强化宠物吧！', next: 'cave_hermit_boost' },
+                { text: '我去探索了！', next: null, effect: { size: 30 } },
+            ]
+        },
+
+        oasis_npc: {
+            speaker: '绿洲守护者',
+            text: '欢迎来到沙漠中唯一的绿洲！在这里你不会缩小的。\n好好休息一下吧，外面的沙漠可不是闹着玩的。',
+            choices: [
+                { text: '能帮我恢复体力吗？', next: 'oasis_heal' },
+                { text: '沙漠还有多远才能穿过？', next: 'oasis_info' },
+                { text: '谢谢，我休息一下。', next: null, effect: { hp: 30 } },
+            ]
+        },
+        oasis_heal: {
+            speaker: '绿洲守护者',
+            text: '喝点绿洲的泉水吧~ 恢复了50点HP！\n记住，出去后还是会缩小的，做好准备再走哦。',
+            choices: [
+                { text: '谢谢！', next: null, effect: { hp: 50 } },
+            ]
+        },
+        oasis_info: {
+            speaker: '绿洲守护者',
+            text: '从这里出去，继续往南走大概10步就能到达菌窟入口。\n⚠️ 提醒：如果你想拿巨型粘土，要在菌窟里打败100只小菌！\n建议至少有200毫米的体型再去挑战。',
+            choices: [
+                { text: '好的，我准备好了！', next: null },
+                { text: '先让我恢复一下...', next: 'oasis_heal' },
+            ]
+        },
+
+        fake_shopkeeper: {
+            speaker: '⚠️ 假店老板',
+            text: '哈哈！欢迎来到我的"商店"！\n可惜你已经中计了！这里什么都买不到！',
+            choices: [
+                { text: '可恶！（赶紧逃跑）', next: null, effect: { coins: -15, size: -30 } },
+            ]
+        },
+
+        home_resident: {
+            speaker: '🏠 小屋主人',
+            text: '哎呀，有客人来了！快请坐~\n这是我的小家，虽然不大但很温暖。你冒险累了吧？',
+            choices: [
+                { text: '好温暖！能让我休息一下吗？', next: 'home_rest' },
+                { text: '外面是什么情况？', next: 'home_info' },
+                { text: '谢谢，我只是路过~', next: null },
+            ]
+        },
+        home_rest: {
+            speaker: '🏠 小屋主人',
+            text: '当然可以！来喝杯热茶吧~ ☕\n恢复了30点HP，身体也长大了一点点！\n下次路过也欢迎来坐坐哦！',
+            choices: [
+                { text: '谢谢你的好意！', next: null, effect: { hp: 30, size: 5 } },
+            ]
+        },
+        home_info: {
+            speaker: '🏠 小屋主人',
+            text: '往东走是一大片绿草原，那里有商店可以买东西。\n不过要小心，草原上有些绿色史莱姆会靠近你！\n⚔1级的最弱，你肯定打得过~',
+            choices: [
+                { text: '好的，我知道了！', next: null },
+                { text: '让我休息一下再出发', next: 'home_rest' },
+            ]
+        },
+
+        museum_curator: {
+            speaker: '🏛️ 馆长',
+            text: '欢迎来到粘土博物馆！这里收藏着关于粘土世界的珍贵历史。\n你知道吗？传说中最大的粘土曾经有100米高呢！',
+            choices: [
+                { text: '给我讲讲粘土的历史！', next: 'museum_history' },
+                { text: '有什么能帮助我冒险的吗？', next: 'museum_tip' },
+                { text: '我去看看展品~', next: null, effect: { size: 3 } },
+            ]
+        },
+        museum_history: {
+            speaker: '🏛️ 馆长',
+            text: '很久以前，粘土世界到处都是友善的小粘土们。后来黑暗菌入侵了山林地区，把你的好朋友困在了那里！\n只有成长到15米的超级粘土才能打败山林巨兽...\n收集粘土球、击败敌人都会让你变大哦！',
+            choices: [
+                { text: '我一定会救出朋友的！', next: null, effect: { size: 5 } },
+                { text: '还有别的秘密吗？', next: 'museum_secret' },
+            ]
+        },
+        museum_secret: {
+            speaker: '🏛️ 馆长',
+            text: '嘘...我告诉你一个秘密：\n🔮 菌窟里打败100只小菌可以获得巨型粘土，一下子+10米！\n🐾 海边有个金色的NPC会送你宠物伙伴，战斗力大增！\n📚 海边的图书馆也有不少有用的知识~',
+            choices: [
+                { text: '太有用了，谢谢馆长！', next: null, effect: { size: 10 } },
+            ]
+        },
+        museum_tip: {
+            speaker: '🏛️ 馆长',
+            text: '冒险小贴士：\n1️⃣ 先去海边找宠物，有伙伴攻击力会变强\n2️⃣ 沙漠每步缩小1mm，准备好再去\n3️⃣ 商店有防沙护盾，很有用\n4️⃣ 记得常用H键查看进度提示！',
+            choices: [
+                { text: '记住了！', next: null },
+            ]
+        },
+
+        librarian: {
+            speaker: '📚 图书管理员',
+            text: '欢迎来到知识图书馆！这里收集了世界各地的粘土知识。\n知识就是力量～想看看什么类型的书？',
+            choices: [
+                { text: '战斗技巧', next: 'library_combat' },
+                { text: '世界地图知识', next: 'library_map' },
+                { text: '神秘传说', next: 'library_legend' },
+            ]
+        },
+        library_combat: {
+            speaker: '📚 图书管理员',
+            text: '《粘土战斗手册》：\n🗡️ 空格或Z键攻击，攻击有冷却时间\n🛡️ 宠物会自动辅助攻击\n💪 体型越大，血量越高\n📖 读完这本书，感觉战斗力提升了！',
+            choices: [
+                { text: '学到了！谢谢！', next: null, effect: { attackPower: 2 } },
+            ]
+        },
+        library_map: {
+            speaker: '📚 图书管理员',
+            text: '《粘土世界地图册》：\n🌿 起始小路 → 翠绿草原 → 海边沙滩\n🏜️ 草原南边 → 危险沙漠 → 菌窟深处\n⛰️ 菌窟东边 → 山林终极区（Boss在那里！）\n📍 各区域都有建筑可以进入探索~',
+            choices: [
+                { text: '路线记住了！', next: null },
+            ]
+        },
+        library_legend: {
+            speaker: '📚 图书管理员',
+            text: '《粘土世界的传说》：\n✨ 据说有一块远古粘土，蕴含着整个世界的能量...\n🔑 只有打败山林巨兽的勇者才能见到被困的朋友\n🌟 朋友被救出后，粘土世界就会恢复和平\n📖 这些知识让你更加坚定了信念！',
+            choices: [
+                { text: '我一定会成功的！', next: null, effect: { size: 8 } },
+            ]
+        }
+    },
+
+    loadNPCs(zoneName) {
+        const zone = ZONES[zoneName];
+        if (!zone) return;
+        this.npcs = zone.spawnNPCs();
+    },
+
+    getNPCAt(tileX, tileY) {
+        for (const npc of this.npcs) {
+            if (Math.abs(npc.x - tileX) <= 1 && Math.abs(npc.y - tileY) <= 1) {
+                return npc;
+            }
+        }
+        return null;
+    },
+
+    startDialogue(dialogueId) {
+        const dialogue = this.dialogues[dialogueId];
+        if (!dialogue) return null;
+        this.activeDialogue = dialogueId;
+        return dialogue;
+    },
+
+    getDialogue(dialogueId) {
+        return this.dialogues[dialogueId] || null;
+    },
+
+    processKeywordInput(text, dialogueId) {
+        const dialogue = this.dialogues[dialogueId];
+        if (!dialogue || !dialogue.keywords) return null;
+        
+        for (const [pattern, response] of Object.entries(dialogue.keywords)) {
+            const regex = new RegExp(pattern, 'i');
+            if (regex.test(text)) {
+                return response;
+            }
+        }
+        return { text: '（对方似乎不太理解你的话...）', effect: null };
+    },
+
+    applyEffect(effect) {
+        if (!effect) return;
+        
+        if (effect.coins) {
+            Player.coins = Math.max(0, Player.coins + effect.coins);
+        }
+        if (effect.size) {
+            Player.grow(effect.size);
+        }
+        if (effect.hp) {
+            if (effect.hp > 0) {
+                Player.heal(effect.hp);
+            } else {
+                Player.takeDamage(-effect.hp);
+            }
+        }
+        if (effect.pet) {
+            Player.hasPet = true;
+        }
+        if (effect.petPower) {
+            Player.petPower += effect.petPower;
+            Player.attackPower += effect.petPower;
+        }
+        if (effect.openShop) {
+            Shop.openRealShop();
+        }
+        if (effect.attackPower) {
+            Player.attackPower += effect.attackPower;
+        }
+        if (effect.startFungiChallenge) {
+            Player.fungiChallengeActive = true;
+        }
+        if (effect.fungiChallengeComplete) {
+            Player.fungiChallengeComplete = true;
+        }
+        if (effect.startBoss) {
+            // Handled by main game loop
+        }
+        if (effect.victory) {
+            Player.friendRescued = true;
+        }
+    }
+};
+
+
+// combat.js - Combat system with enemy AI movement
+const Combat = {
+    active: false,
+    enemies: [],
+    currentEnemy: null,
+    playerAttackCooldown: 0,
+    enemyAttackCooldown: 0,
+    fungiWave: 0,
+    fungiTotal: 0,
+    enemyMoveTimer: 0,
+    
+    PLAYER_ATTACK_RATE: 0.4, // seconds between attacks
+    ENEMY_ATTACK_RATE: 1.2,
+    ENEMY_MOVE_RATE: 1.0, // seconds between enemy movements
+
+    loadEnemies(zoneName) {
+        const zone = ZONES[zoneName];
+        if (!zone) return;
+        this.enemies = zone.spawnEnemies().map((e, i) => ({
+            ...e,
+            id: i,
+            alive: true,
+            attackTimer: 0,
+            hitFlash: 0,
+            moveTimer: Math.random() * this.ENEMY_MOVE_RATE,
+            pixelX: e.x * TILE_SIZE + TILE_SIZE / 2,
+            pixelY: e.y * TILE_SIZE + TILE_SIZE / 2,
+        }));
+    },
+
+    getEnemyNear(tileX, tileY, range = 2) {
+        for (const enemy of this.enemies) {
+            if (!enemy.alive) continue;
+            const dx = Math.abs(enemy.x - tileX);
+            const dy = Math.abs(enemy.y - tileY);
+            if (dx <= range && dy <= range) {
+                return enemy;
+            }
+        }
+        return null;
+    },
+
+    startCombat(enemy) {
+        this.active = true;
+        this.currentEnemy = enemy;
+        this.playerAttackCooldown = 0;
+        this.enemyAttackCooldown = 0;
+    },
+
+    endCombat() {
+        this.active = false;
+        this.currentEnemy = null;
+    },
+
+    playerAttack() {
+        if (!this.active || !this.currentEnemy || this.playerAttackCooldown > 0) return null;
+        
+        const damage = Player.attackPower + (Player.hasPet ? Player.petPower : 0);
+        this.currentEnemy.hp -= damage;
+        this.currentEnemy.hitFlash = 0.2;
+        this.playerAttackCooldown = this.PLAYER_ATTACK_RATE;
+        
+        if (this.currentEnemy.hp <= 0) {
+            const enemy = this.currentEnemy;
+            this.currentEnemy.alive = false;
+            const rewards = this.getKillRewards(this.currentEnemy);
+            this.endCombat();
+            return { type: 'kill', rewards, damage, enemy };
+        }
+        
+        return { type: 'hit', damage };
+    },
+
+    update(dt) {
+        if (!this.active || !this.currentEnemy) return null;
+        
+        // Cooldowns
+        if (this.playerAttackCooldown > 0) {
+            this.playerAttackCooldown -= dt;
+        }
+        
+        // Enemy attacks
+        this.enemyAttackCooldown -= dt;
+        if (this.enemyAttackCooldown <= 0) {
+            this.enemyAttackCooldown = this.ENEMY_ATTACK_RATE;
+            const enemyX = this.currentEnemy.pixelX || (this.currentEnemy.x * TILE_SIZE + TILE_SIZE / 2);
+            const enemyY = this.currentEnemy.pixelY || (this.currentEnemy.y * TILE_SIZE + TILE_SIZE / 2);
+            const dead = Player.takeDamage(this.currentEnemy.damage);
+            if (dead) {
+                return { type: 'player_dead', damage: this.currentEnemy.damage, enemyX, enemyY };
+            }
+            return { type: 'enemy_attack', damage: this.currentEnemy.damage, enemyX, enemyY };
+        }
+        
+        // Hit flash
+        if (this.currentEnemy.hitFlash > 0) {
+            this.currentEnemy.hitFlash -= dt;
+        }
+        
+        return null;
+    },
+
+    updateEnemyMovement(dt) {
+        for (const enemy of this.enemies) {
+            if (!enemy.alive) continue;
+            if (enemy.isBoss) continue; // Boss doesn't wander
+            
+            enemy.moveTimer -= dt;
+            if (enemy.moveTimer <= 0) {
+                enemy.moveTimer = this.ENEMY_MOVE_RATE + Math.random() * 0.5;
+                
+                // Move toward player if close, else random
+                const distToPlayer = Math.abs(enemy.x - Player.tileX) + Math.abs(enemy.y - Player.tileY);
+                let dx = 0, dy = 0;
+                
+                if (distToPlayer <= 5) {
+                    // Chase player
+                    dx = Math.sign(Player.tileX - enemy.x);
+                    dy = Math.sign(Player.tileY - enemy.y);
+                    // Pick one direction
+                    if (Math.random() > 0.5) dx = 0;
+                    else dy = 0;
+                } else {
+                    // Random walk
+                    const dir = Math.floor(Math.random() * 4);
+                    if (dir === 0) dx = 1;
+                    else if (dir === 1) dx = -1;
+                    else if (dir === 2) dy = 1;
+                    else dy = -1;
+                }
+                
+                const newX = enemy.x + dx;
+                const newY = enemy.y + dy;
+                
+                if (World.isWalkable(newX, newY)) {
+                    enemy.x = newX;
+                    enemy.y = newY;
+                    enemy.pixelX = newX * TILE_SIZE + TILE_SIZE / 2;
+                    enemy.pixelY = newY * TILE_SIZE + TILE_SIZE / 2;
+                }
+            }
+        }
+    },
+
+    getKillRewards(enemy) {
+        const rewards = { coins: 0, clay: 0, message: '' };
+        
+        switch (enemy.type) {
+            case 'slime':
+                rewards.coins = 3 + Math.floor(Math.random() * 5);
+                rewards.clay = 2 + Math.floor(Math.random() * 3);
+                rewards.message = `击败史莱姆！+${rewards.coins}金币 +${rewards.clay}mm`;
+                break;
+            case 'fungi':
+                rewards.coins = 2;
+                rewards.clay = 1;
+                Player.fungiDefeated++;
+                rewards.message = `击败小菌！(${Player.fungiDefeated}/100) +${rewards.coins}金币`;
+                
+                if (Player.fungiDefeated >= 100 && !Player.hasGiantClay) {
+                    rewards.giantClay = true;
+                    rewards.message = '🎉 击败100只小菌！获得【巨型粘土】！体型 +10米！！！';
+                    Player.hasGiantClay = true;
+                    Player.grow(10000);
+                    Player.fungiChallengeActive = false;
+                    Player.fungiChallengeComplete = true;
+                }
+                break;
+            case 'boss':
+                rewards.message = '🎉🎉🎉 击败了山林巨兽！！！快去救你的朋友！';
+                Player.bossDefeated = true;
+                break;
+        }
+        
+        Player.coins += rewards.coins;
+        Player.grow(rewards.clay);
+        
+        return rewards;
+    },
+
+    spawnFungiWave() {
+        if (Player.fungiDefeated >= 100) return;
+        
+        const remaining = 100 - Player.fungiDefeated;
+        const waveSize = Math.min(5, remaining);
+        
+        for (let i = 0; i < waveSize; i++) {
+            const x = 4 + Math.floor(Math.random() * 17);
+            const y = 3 + Math.floor(Math.random() * 14);
+            // Level scales with progress: 1-2 early, 2-3 late
+            const level = Math.min(3, 1 + Math.floor(Player.fungiDefeated / 40));
+            this.enemies.push({
+                type: 'fungi',
+                x: x,
+                y: y,
+                hp: 6 + level * 2,
+                maxHp: 6 + level * 2,
+                damage: level,
+                level: level,
+                id: this.enemies.length,
+                alive: true,
+                attackTimer: 0,
+                hitFlash: 0,
+                moveTimer: Math.random() * this.ENEMY_MOVE_RATE,
+                pixelX: x * TILE_SIZE + TILE_SIZE / 2,
+                pixelY: y * TILE_SIZE + TILE_SIZE / 2,
+            });
+        }
+    },
+
+    needsNewWave() {
+        if (!Player.fungiChallengeActive) return false;
+        if (Player.fungiDefeated >= 100) return false;
+        const aliveFungi = this.enemies.filter(e => e.type === 'fungi' && e.alive);
+        return aliveFungi.length === 0;
+    }
+};
+
+
+// shop.js - Real and fake shop systems
+const Shop = {
+    isOpen: false,
+    isFake: false,
+
+    realShopItems: [
+        { id: 'food1', name: '粘土面包', price: 10, desc: '恢复 30 HP', effect: { hp: 30 } },
+        { id: 'food2', name: '能量果汁', price: 20, desc: '恢复 60 HP', effect: { hp: 60 } },
+        { id: 'clay1', name: '浓缩粘土', price: 15, desc: '体型 +20mm', effect: { size: 20 } },
+        { id: 'clay2', name: '高级粘土块', price: 30, desc: '体型 +50mm', effect: { size: 50 } },
+        { id: 'shield', name: '防沙护盾', price: 25, desc: '进入沙漠前5步不减体型', effect: { desertShield: 5 } },
+        { id: 'petfood', name: '星星零食', price: 40, desc: '宠物战力 +5', effect: { petPower: 5 } },
+    ],
+
+    fakeShopItems: [
+        { id: 'fake1', name: '超级粘土（假）', price: 30, desc: '看起来很划算...', effect: { size: -30, coins: -10 } },
+        { id: 'fake2', name: '神秘药水（假）', price: 20, desc: '闻起来怪怪的...', effect: { hp: -20 } },
+        { id: 'fake3', name: '黄金护符（假）', price: 50, desc: '闪闪发光！', effect: { coins: -30 } },
+    ],
+
+    desertShield: 0, // steps protected in desert
+
+    openRealShop() {
+        this.isOpen = true;
+        this.isFake = false;
+        this.renderShop();
+    },
+
+    openFakeShop() {
+        this.isOpen = true;
+        this.isFake = true;
+        this.renderShop();
+    },
+
+    renderShop() {
+        const overlay = document.getElementById('shop-overlay');
+        const title = document.getElementById('shop-title');
+        const itemsDiv = document.getElementById('shop-items');
+        
+        overlay.classList.remove('hidden');
+        
+        if (this.isFake) {
+            title.textContent = '🏪 超值好店（？）';
+            title.style.color = '#ff6666';
+        } else {
+            title.textContent = '🏪 粘土补给商店';
+            title.style.color = '#ffd700';
+        }
+        
+        const items = this.isFake ? this.fakeShopItems : this.realShopItems;
+        itemsDiv.innerHTML = '';
+        
+        items.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'shop-item';
+            div.innerHTML = `
+                <div class="item-name">${item.name}</div>
+                <div class="item-price">💰 ${item.price} 金币</div>
+                <div class="item-desc">${item.desc}</div>
+            `;
+            div.onclick = () => this.buyItem(item);
+            itemsDiv.appendChild(div);
+        });
+    },
+
+    buyItem(item) {
+        if (Player.coins < item.price) {
+            UI.showNotification('金币不够！');
+            return;
+        }
+        
+        Player.coins -= item.price;
+        
+        if (item.effect.hp) {
+            if (item.effect.hp > 0) {
+                Player.heal(item.effect.hp);
+            } else {
+                Player.takeDamage(-item.effect.hp);
+            }
+        }
+        if (item.effect.size) {
+            Player.grow(item.effect.size);
+        }
+        if (item.effect.coins) {
+            Player.coins = Math.max(0, Player.coins + item.effect.coins);
+        }
+        if (item.effect.petPower && Player.hasPet) {
+            Player.petPower += item.effect.petPower;
+            Player.attackPower += item.effect.petPower;
+        }
+        if (item.effect.desertShield) {
+            this.desertShield += item.effect.desertShield;
+        }
+        
+        if (this.isFake) {
+            UI.showNotification('💀 你被骗了！这是假商店！');
+        } else {
+            UI.showNotification(`购买成功：${item.name}`);
+        }
+        
+        UI.updateHUD();
+    },
+
+    closeShop() {
+        this.isOpen = false;
+        document.getElementById('shop-overlay').classList.add('hidden');
+    },
+
+    // Check if player steps on shop tile
+    checkShopTile(tileX, tileY) {
+        const tile = World.getTile(tileX, tileY);
+        if (tile === 'shop') {
+            return 'real';
+        }
+        return null;
+    }
+};
+
+
+// ui.js - UI management, HUD, dialogue, notifications
+const UI = {
+    notifications: [],
+    dialogueCallback: null,
+
+    updateHUD() {
+        document.getElementById('size-display').textContent = Player.getSizeDisplay();
+        document.getElementById('coins-display').textContent = Player.coins;
+        document.getElementById('hp-display').textContent = `${Player.hp}/${Player.maxHP}`;
+        document.getElementById('pet-display').textContent = Player.hasPet ? 
+            `⭐ 战力 ${Player.petPower}` : '无';
+        document.getElementById('zone-display').textContent = 
+            ZONES[World.currentZone]?.name || '';
+    },
+
+    showNotification(text) {
+        const container = document.getElementById('game-screen');
+        const notif = document.createElement('div');
+        notif.className = 'notification';
+        notif.textContent = text;
+        container.appendChild(notif);
+        
+        setTimeout(() => {
+            if (notif.parentNode) {
+                notif.parentNode.removeChild(notif);
+            }
+        }, 2200);
+    },
+
+    showZoneTransition(zoneName) {
+        const container = document.getElementById('game-screen');
+        const transition = document.createElement('div');
+        transition.className = 'zone-transition';
+        transition.textContent = zoneName;
+        container.appendChild(transition);
+        
+        setTimeout(() => {
+            if (transition.parentNode) {
+                transition.parentNode.removeChild(transition);
+            }
+        }, 1600);
+    },
+
+    // Dialogue system
+    showDialogue(dialogue, callback) {
+        const overlay = document.getElementById('dialogue-overlay');
+        const speaker = document.getElementById('dialogue-speaker');
+        const text = document.getElementById('dialogue-text');
+        const choices = document.getElementById('dialogue-choices');
+        const inputArea = document.getElementById('dialogue-input-area');
+        
+        overlay.classList.remove('hidden');
+        speaker.textContent = dialogue.speaker;
+        text.textContent = dialogue.text;
+        choices.innerHTML = '';
+        this.dialogueCallback = callback;
+        
+        // Render choices
+        if (dialogue.choices) {
+            dialogue.choices.forEach((choice, i) => {
+                const btn = document.createElement('button');
+                btn.textContent = choice.text;
+                btn.onclick = () => {
+                    this.hideDialogue();
+                    if (callback) callback({ type: 'choice', index: i, choice });
+                };
+                choices.appendChild(btn);
+            });
+        }
+        
+        // Show typing input if allowed
+        if (dialogue.allowTyping) {
+            inputArea.classList.remove('hidden');
+            const input = document.getElementById('dialogue-input');
+            input.value = '';
+            input.focus();
+        } else {
+            inputArea.classList.add('hidden');
+        }
+    },
+
+    hideDialogue() {
+        document.getElementById('dialogue-overlay').classList.add('hidden');
+        document.getElementById('dialogue-input-area').classList.add('hidden');
+        this.dialogueCallback = null;
+    },
+
+    setupDialogueInput() {
+        const input = document.getElementById('dialogue-input');
+        const sendBtn = document.getElementById('dialogue-send');
+        
+        const sendMessage = () => {
+            const text = input.value.trim();
+            if (!text) return;
+            input.value = '';
+            
+            if (this.dialogueCallback) {
+                this.dialogueCallback({ type: 'text', text });
+            }
+        };
+        
+        sendBtn.onclick = sendMessage;
+        input.onkeydown = (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendMessage();
+            }
+        };
+    },
+
+    // Combat UI
+    showCombatHUD(enemy) {
+        const overlay = document.getElementById('combat-overlay');
+        overlay.classList.remove('hidden');
+        document.getElementById('enemy-name').textContent = 
+            enemy.type === 'boss' ? '🔥 山林巨兽' :
+            enemy.type === 'fungi' ? '🍄 小菌' : '👾 史莱姆';
+        this.updateEnemyHP(enemy);
+        
+        // Show fungi counter if in cave
+        const counter = document.getElementById('combat-counter');
+        if (Player.fungiChallengeActive) {
+            counter.classList.remove('hidden');
+            document.getElementById('fungi-count').textContent = Player.fungiDefeated;
+        } else {
+            counter.classList.add('hidden');
+        }
+    },
+
+    updateEnemyHP(enemy) {
+        const fill = document.getElementById('enemy-hp-fill');
+        fill.style.width = `${(enemy.hp / enemy.maxHp) * 100}%`;
+    },
+
+    hideCombatHUD() {
+        document.getElementById('combat-overlay').classList.add('hidden');
+    },
+
+    updateFungiCount() {
+        document.getElementById('fungi-count').textContent = Player.fungiDefeated;
+    },
+
+    // Help overlay
+    showHelp(progressHint, childrenMode) {
+        let helpDiv = document.getElementById('help-overlay');
+        if (!helpDiv) {
+            helpDiv = document.createElement('div');
+            helpDiv.id = 'help-overlay';
+            helpDiv.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:200;display:flex;justify-content:center;align-items:center;color:#fff;overflow-y:auto;';
+            document.getElementById('game-screen').appendChild(helpDiv);
+        }
+        helpDiv.style.display = 'flex';
+        const childBtnStyle = childrenMode 
+            ? 'background:#ff69b4;color:#fff;border:2px solid #fff;' 
+            : 'background:rgba(255,105,180,0.2);color:#ffb6c1;border:2px solid #ffb6c1;';
+        const childBtnText = childrenMode ? '🧒 儿童模式：已开启 ✓' : '🧒 儿童模式：已关闭';
+        
+        // Build save slots HTML
+        const slots = Game.getSaveSlots();
+        let slotsHTML = '';
+        for (let i = 1; i <= 10; i++) {
+            const slot = slots[i];
+            if (slot) {
+                const zoneName = ZONES[slot.currentZone]?.name || slot.currentZone;
+                const sizeDisplay = slot.sizeMM >= 1000 ? (slot.sizeMM / 1000).toFixed(1) + '米' : slot.sizeMM + 'mm';
+                slotsHTML += `<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 8px;margin:2px 0;background:rgba(255,182,193,0.1);border-radius:6px;">
+                    <span style="font-size:12px;color:#eee;">📁 ${i}. ${zoneName} | ${sizeDisplay} | ${slot.savedAt || ''}</span>
+                    <span>
+                        <button class="slot-save-btn" data-slot="${i}" style="background:#FF9800;color:#fff;border:none;padding:2px 8px;border-radius:4px;cursor:pointer;font-size:11px;">覆盖</button>
+                        <button class="slot-load-btn" data-slot="${i}" style="background:#4CAF50;color:#fff;border:none;padding:2px 8px;border-radius:4px;cursor:pointer;font-size:11px;margin-left:2px;">读取</button>
+                        <button class="slot-del-btn" data-slot="${i}" style="background:#f44336;color:#fff;border:none;padding:2px 8px;border-radius:4px;cursor:pointer;font-size:11px;margin-left:2px;">删除</button>
+                    </span>
+                </div>`;
+            } else {
+                slotsHTML += `<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 8px;margin:2px 0;background:rgba(100,100,100,0.1);border-radius:6px;">
+                    <span style="font-size:12px;color:#666;">💿 ${i}. (空)</span>
+                    <button class="slot-save-btn" data-slot="${i}" style="background:#2196F3;color:#fff;border:none;padding:2px 8px;border-radius:4px;cursor:pointer;font-size:11px;">保存</button>
+                </div>`;
+            }
+        }
+
+        helpDiv.innerHTML = `
+            <div style="max-width:620px;max-height:90vh;overflow-y:auto;padding:25px;background:rgba(30,30,50,0.95);border:2px solid #ffb6c1;border-radius:12px;">
+                <h2 style="color:#ffb6c1;text-align:center;margin-bottom:12px;">📖 帮助 / Help</h2>
+                <div style="margin-bottom:12px;padding:8px;background:rgba(255,182,193,0.1);border-radius:8px;">
+                    <p style="color:#ffd700;font-weight:bold;margin-bottom:4px;">🎯 当前进度提示：</p>
+                    <p style="color:#eee;font-size:13px;">${progressHint}</p>
+                </div>
+                <div style="display:flex;gap:20px;">
+                    <div style="flex:1;">
+                        <h3 style="color:#ffb6c1;margin-bottom:6px;font-size:13px;">⌨️ 操作：</h3>
+                        <table style="width:100%;font-size:12px;line-height:1.8;">
+                            <tr><td style="color:#ffd700;">方向键/WASD</td><td>移动</td></tr>
+                            <tr><td style="color:#ffd700;">E / Enter</td><td>对话/进入</td></tr>
+                            <tr><td style="color:#ffd700;">空格 / Z</td><td>攻击</td></tr>
+                            <tr><td style="color:#ffd700;">H</td><td>帮助</td></tr>
+                        </table>
+                    </div>
+                    <div style="flex:1;">
+                        <h3 style="color:#ffb6c1;margin-bottom:6px;font-size:13px;">📊 状态：</h3>
+                        <table style="width:100%;font-size:12px;line-height:1.8;">
+                            <tr><td>体型：</td><td style="color:#ff69b4;">${Player.getSizeDisplay()}</td></tr>
+                            <tr><td>金币：</td><td style="color:#ffd700;">${Player.coins}</td></tr>
+                            <tr><td>宠物：</td><td>${Player.hasPet ? '⭐' + Player.petPower : '❌'}</td></tr>
+                            <tr><td>区域：</td><td>${ZONES[World.currentZone]?.name || ''}</td></tr>
+                        </table>
+                    </div>
+                </div>
+                <h3 style="color:#ffb6c1;margin:12px 0 6px;font-size:13px;">💾 存档管理 (${Object.keys(slots).length}/10)：</h3>
+                <div id="save-slots-container" style="max-height:200px;overflow-y:auto;border:1px solid rgba(255,182,193,0.3);border-radius:8px;padding:6px;">
+                    ${slotsHTML}
+                </div>
+                <div style="text-align:center;margin-top:12px;">
+                    <button id="children-mode-btn" style="${childBtnStyle}padding:6px 16px;border-radius:20px;font-size:13px;cursor:pointer;font-weight:bold;">${childBtnText}</button>
+                </div>
+                <p style="text-align:center;margin-top:6px;color:#aaa;font-size:10px;">${childrenMode ? '🔊 鼠标悬停文字2秒后自动朗读' : '开启儿童模式后悬停文字会朗读'}</p>
+                <p style="text-align:center;margin-top:8px;color:#888;font-size:11px;">按 H 关闭</p>
+            </div>
+        `;
+        // Attach button handlers
+        const btn = document.getElementById('children-mode-btn');
+        if (btn) btn.onclick = () => Game.toggleChildrenMode();
+        
+        // Save slot buttons
+        document.querySelectorAll('.slot-save-btn').forEach(b => {
+            b.onclick = () => {
+                const slot = parseInt(b.dataset.slot);
+                const slots = Game.getSaveSlots();
+                if (slots[slot]) {
+                    if (confirm('此存档位已有数据，确定覆盖保存吗？')) {
+                        Game.saveToSlot(slot);
+                    }
+                } else {
+                    Game.saveToSlot(slot);
+                }
+            };
+        });
+        document.querySelectorAll('.slot-load-btn').forEach(b => {
+            b.onclick = () => {
+                if (confirm('确定要读取此存档吗？当前未保存的进度将丢失。')) {
+                    Game.loadFromSlot(parseInt(b.dataset.slot));
+                }
+            };
+        });
+        document.querySelectorAll('.slot-del-btn').forEach(b => {
+            b.onclick = () => {
+                if (confirm('确定删除此存档？删除后不可恢复！')) {
+                    Game.deleteSlot(parseInt(b.dataset.slot));
+                }
+            };
+        });
+    },
+
+    hideHelp() {
+        const helpDiv = document.getElementById('help-overlay');
+        if (helpDiv) helpDiv.style.display = 'none';
+    },
+
+    // Game over screen
+    showGameOver(victory) {
+        const screen = document.getElementById('gameover-screen');
+        const title = document.getElementById('gameover-title');
+        const text = document.getElementById('gameover-text');
+        
+        screen.classList.remove('hidden');
+        screen.classList.add('active');
+        
+        if (victory) {
+            title.textContent = '🎉 通关成功！';
+            title.style.color = '#ffd700';
+            text.textContent = `恭喜！你成功从${Player.getSizeDisplay()}的小粘土成长为巨人，打败了山林巨兽，救出了你最好的朋友！\n冒险总用时：精彩的旅程！`;
+        } else {
+            title.textContent = '💀 冒险失败...';
+            title.style.color = '#ff4444';
+            text.textContent = '小粘土的力量被消耗殆尽了...但不要放弃！重新开始，这次一定能成功！';
+        }
+    },
+
+    // Minimap
+    drawMinimap() {
+        const canvas = document.getElementById('minimap-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 150;
+        canvas.height = 120;
+        
+        const zone = ZONES[World.currentZone];
+        if (!zone || !World.currentMap) return;
+        
+        const tileW = canvas.width / zone.width;
+        const tileH = canvas.height / zone.height;
+        
+        // Draw tiles
+        for (let y = 0; y < zone.height; y++) {
+            for (let x = 0; x < zone.width; x++) {
+                const tile = World.currentMap[y][x];
+                let color;
+                switch(tile) {
+                    case 'grass': color = '#4caf50'; break;
+                    case 'sand': color = '#f4d03f'; break;
+                    case 'water': color = '#42a5f5'; break;
+                    case 'path': color = '#a0855b'; break;
+                    case 'cave': color = '#37474f'; break;
+                    case 'mountain': color = '#455a64'; break;
+                    case 'wall': color = '#5d4037'; break;
+                    case 'tree': color = '#2e7d32'; break;
+                    case 'portal': color = '#64b5f6'; break;
+                    case 'entrance': color = '#8d6e63'; break;
+                    case 'shop': color = '#ffd700'; break;
+                    case 'house_danger': color = '#9c27b0'; break;
+                    default: color = '#333';
+                }
+                ctx.fillStyle = color;
+                ctx.fillRect(x * tileW, y * tileH, tileW, tileH);
+            }
+        }
+        
+        // Draw player position
+        ctx.fillStyle = '#ff69b4';
+        ctx.beginPath();
+        ctx.arc(Player.tileX * tileW + tileW/2, Player.tileY * tileH + tileH/2, 3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw NPCs
+        NPCSystem.npcs.forEach(npc => {
+            ctx.fillStyle = npc.type === 'bad' ? '#ff4444' : '#4fc3f7';
+            ctx.fillRect(npc.x * tileW, npc.y * tileH, tileW, tileH);
+        });
+        
+        // Draw enemies
+        Combat.enemies.forEach(enemy => {
+            if (!enemy.alive) return;
+            ctx.fillStyle = '#9c27b0';
+            ctx.fillRect(enemy.x * tileW, enemy.y * tileH, tileW, tileH);
+        });
+    }
+};
+
+
+// animation.js - Opening cutscene animation
+const Animation = {
+    canvas: null,
+    ctx: null,
+    phase: 0,
+    timer: 0,
+    complete: false,
+    skipped: false,
+
+    // Animation phases
+    phases: [
+        { duration: 3, name: 'spin' },        // Pink clay spinning
+        { duration: 4, name: 'story1' },       // Intro story
+        { duration: 4, name: 'story2' },       // Friend kidnapped
+        { duration: 4, name: 'story3' },       // Determination
+        { duration: 3, name: 'preview' },      // Adventure preview
+        { duration: 2, name: 'title' },        // Title display
+    ],
+
+    storyTexts: [
+        '在软软甜甜的粘土世界里，\n生活着一只只有5毫米的粉色小粘土。\n它每天和最好的朋友一起散步、玩耍...',
+        '可是有一天，山林深处的巨大怪兽突然出现，\n偷偷绑架了小粘土的好朋友，\n把好朋友关在漆黑的深山里...',
+        '虽然只有5毫米，力量弱小，\n但小粘土非常勇敢，下定决心：\n"我一定要长到15米，打败怪兽，救出好朋友！"',
+        '危险的沙漠...神秘的菌窟...\n伪装的间谍...隐藏的陷阱...\n漫长的冒险即将开始！',
+    ],
+
+    init() {
+        this.canvas = document.getElementById('intro-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.canvas.width = 800;
+        this.canvas.height = 600;
+        this.phase = 0;
+        this.timer = 0;
+        this.complete = false;
+    },
+
+    skip() {
+        this.skipped = true;
+        this.complete = true;
+    },
+
+    update(dt) {
+        if (this.complete) return true;
+        
+        this.timer += dt;
+        const currentPhase = this.phases[this.phase];
+        
+        if (this.timer >= currentPhase.duration) {
+            this.timer = 0;
+            this.phase++;
+            if (this.phase >= this.phases.length) {
+                this.complete = true;
+                return true;
+            }
+        }
+        
+        return false;
+    },
+
+    render() {
+        if (this.complete) return;
+        
+        const ctx = this.ctx;
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+        const currentPhase = this.phases[this.phase];
+        const progress = this.timer / currentPhase.duration;
+        
+        // Clear
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(0, 0, w, h);
+        
+        switch (currentPhase.name) {
+            case 'spin':
+                this.renderSpin(ctx, w, h, progress);
+                break;
+            case 'story1':
+                this.renderStory(ctx, w, h, 0, progress);
+                break;
+            case 'story2':
+                this.renderStory(ctx, w, h, 1, progress);
+                break;
+            case 'story3':
+                this.renderStory(ctx, w, h, 2, progress);
+                break;
+            case 'preview':
+                this.renderStory(ctx, w, h, 3, progress);
+                break;
+            case 'title':
+                this.renderTitle(ctx, w, h, progress);
+                break;
+        }
+    },
+
+    renderSpin(ctx, w, h, progress) {
+        // Background with soft particles
+        for (let i = 0; i < 20; i++) {
+            const px = (w/2) + Math.cos(i * 0.5 + this.timer) * (100 + i * 10);
+            const py = (h/2) + Math.sin(i * 0.7 + this.timer) * (80 + i * 8);
+            ctx.fillStyle = `rgba(255, 182, 193, ${0.1 + Math.sin(i + this.timer) * 0.05})`;
+            ctx.beginPath();
+            ctx.arc(px, py, 3 + i * 0.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Spinning pink clay
+        const angle = progress * Math.PI * 4; // Two full rotations
+        const scale = 1 + Math.sin(progress * Math.PI * 2) * 0.1;
+        
+        ctx.save();
+        ctx.translate(w/2, h/2);
+        ctx.rotate(angle);
+        ctx.scale(scale, scale);
+        
+        // Draw large pink clay
+        const radius = 40;
+        ctx.fillStyle = '#ff69b4';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, radius, radius * 1.1, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Highlight
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.beginPath();
+        ctx.ellipse(-radius * 0.3, -radius * 0.3, radius * 0.35, radius * 0.25, -0.5, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Eyes
+        ctx.fillStyle = '#333';
+        ctx.beginPath();
+        ctx.arc(-10, -5, 4, 0, Math.PI * 2);
+        ctx.arc(10, -5, 4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Smile
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 5, 12, 0.2, Math.PI - 0.2);
+        ctx.stroke();
+        
+        // Blush
+        ctx.fillStyle = 'rgba(255, 100, 150, 0.5)';
+        ctx.beginPath();
+        ctx.ellipse(-20, 5, 6, 4, 0, 0, Math.PI * 2);
+        ctx.ellipse(20, 5, 6, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.restore();
+        
+        // Text below
+        ctx.fillStyle = 'rgba(255, 255, 255, ' + Math.min(1, progress * 2) + ')';
+        ctx.font = '16px Microsoft YaHei';
+        ctx.textAlign = 'center';
+        ctx.fillText('粉色小粘土准备出发...', w/2, h/2 + 80);
+    },
+
+    renderStory(ctx, w, h, storyIndex, progress) {
+        // Fade in effect
+        const alpha = Math.min(1, progress * 3);
+        
+        // Background scene based on story
+        this.drawStoryBackground(ctx, w, h, storyIndex, progress);
+        
+        // Text box at bottom
+        ctx.fillStyle = `rgba(0, 0, 0, ${0.7 * alpha})`;
+        ctx.fillRect(50, h - 160, w - 100, 130);
+        ctx.strokeStyle = `rgba(255, 182, 193, ${0.8 * alpha})`;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(50, h - 160, w - 100, 130);
+        
+        // Story text with typewriter effect
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.font = '16px Microsoft YaHei';
+        ctx.textAlign = 'center';
+        
+        const text = this.storyTexts[storyIndex];
+        const lines = text.split('\n');
+        const charsToShow = Math.floor(progress * text.length * 1.5);
+        let charCount = 0;
+        
+        lines.forEach((line, i) => {
+            let displayLine = '';
+            for (let c = 0; c < line.length; c++) {
+                if (charCount < charsToShow) {
+                    displayLine += line[c];
+                    charCount++;
+                }
+            }
+            charCount++; // For newline
+            ctx.fillText(displayLine, w/2, h - 130 + i * 30);
+        });
+    },
+
+    drawStoryBackground(ctx, w, h, storyIndex, progress) {
+        switch(storyIndex) {
+            case 0: // Happy life
+                // Blue sky gradient
+                const grad1 = ctx.createLinearGradient(0, 0, 0, h);
+                grad1.addColorStop(0, '#87ceeb');
+                grad1.addColorStop(1, '#4caf50');
+                ctx.fillStyle = grad1;
+                ctx.fillRect(0, 0, w, h);
+                
+                // Simple houses/trees
+                ctx.fillStyle = '#2e7d32';
+                for (let i = 0; i < 5; i++) {
+                    ctx.beginPath();
+                    ctx.arc(100 + i * 150, h - 200, 30, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // Two small clays walking together
+                ctx.fillStyle = '#ff69b4';
+                const walkOffset = Math.sin(progress * Math.PI * 4) * 5;
+                ctx.beginPath();
+                ctx.arc(w/2 - 30 + walkOffset, h - 230, 15, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#4fc3f7';
+                ctx.beginPath();
+                ctx.arc(w/2 + 30 - walkOffset, h - 230, 15, 0, Math.PI * 2);
+                ctx.fill();
+                break;
+                
+            case 1: // Monster appears
+                // Dark sky
+                const grad2 = ctx.createLinearGradient(0, 0, 0, h);
+                grad2.addColorStop(0, '#1a1a2e');
+                grad2.addColorStop(1, '#2d3436');
+                ctx.fillStyle = grad2;
+                ctx.fillRect(0, 0, w, h);
+                
+                // Monster silhouette
+                ctx.fillStyle = 'rgba(20, 0, 0, 0.9)';
+                ctx.beginPath();
+                ctx.ellipse(w/2, h/2 - 50, 80 + Math.sin(progress * 3) * 5, 100, 0, 0, Math.PI * 2);
+                ctx.fill();
+                // Red eyes
+                ctx.fillStyle = '#ff0000';
+                ctx.beginPath();
+                ctx.arc(w/2 - 25, h/2 - 70, 8, 0, Math.PI * 2);
+                ctx.arc(w/2 + 25, h/2 - 70, 8, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Scared friend
+                ctx.fillStyle = '#4fc3f7';
+                ctx.beginPath();
+                ctx.arc(w/2, h/2 + 60, 12, 0, Math.PI * 2);
+                ctx.fill();
+                break;
+                
+            case 2: // Determination
+                // Sunrise gradient
+                const grad3 = ctx.createLinearGradient(0, 0, 0, h);
+                grad3.addColorStop(0, '#ff9a9e');
+                grad3.addColorStop(1, '#fad0c4');
+                ctx.fillStyle = grad3;
+                ctx.fillRect(0, 0, w, h);
+                
+                // Determined pink clay (larger)
+                const detScale = 1 + progress * 0.3;
+                ctx.save();
+                ctx.translate(w/2, h/2 - 50);
+                ctx.scale(detScale, detScale);
+                ctx.fillStyle = '#ff69b4';
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 25, 28, 0, 0, Math.PI * 2);
+                ctx.fill();
+                // Determined eyes
+                ctx.fillStyle = '#333';
+                ctx.beginPath();
+                ctx.arc(-8, -3, 4, 0, Math.PI * 2);
+                ctx.arc(8, -3, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+                
+                // Path ahead
+                ctx.fillStyle = '#a0855b';
+                ctx.beginPath();
+                ctx.moveTo(w/2 - 20, h/2 + 30);
+                ctx.lineTo(w/2 + 20, h/2 + 30);
+                ctx.lineTo(w - 50, h);
+                ctx.lineTo(50, h);
+                ctx.closePath();
+                ctx.fill();
+                break;
+                
+            case 3: // Adventure preview
+                // Split screen showing different zones
+                const zoneColors = ['#f4d03f', '#37474f', '#42a5f5', '#2e7d32'];
+                const zoneNames = ['沙漠', '菌窟', '海边', '山林'];
+                for (let i = 0; i < 4; i++) {
+                    ctx.fillStyle = zoneColors[i];
+                    ctx.fillRect(i * w/4, 0, w/4, h - 170);
+                    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                    ctx.font = '14px Microsoft YaHei';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(zoneNames[i], i * w/4 + w/8, 30);
+                }
+                break;
+        }
+    },
+
+    renderTitle(ctx, w, h, progress) {
+        // Grand title reveal
+        const scale = 0.5 + progress * 0.5;
+        const alpha = Math.min(1, progress * 2);
+        
+        // Background
+        const grad = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, 300);
+        grad.addColorStop(0, 'rgba(255, 105, 180, 0.3)');
+        grad.addColorStop(1, '#1a1a2e');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+        
+        // Title
+        ctx.save();
+        ctx.translate(w/2, h/2 - 30);
+        ctx.scale(scale, scale);
+        ctx.globalAlpha = alpha;
+        
+        ctx.fillStyle = '#ff69b4';
+        ctx.font = 'bold 48px Microsoft YaHei';
+        ctx.textAlign = 'center';
+        ctx.fillText('小黏土走走走', 0, 0);
+        
+        ctx.fillStyle = '#ffb6c1';
+        ctx.font = '20px Microsoft YaHei';
+        ctx.fillText('Little Clay Go Go Go', 0, 40);
+        
+        ctx.restore();
+        
+        // Subtitle
+        if (progress > 0.5) {
+            ctx.fillStyle = `rgba(255, 255, 255, ${(progress - 0.5) * 2})`;
+            ctx.font = '16px Microsoft YaHei';
+            ctx.textAlign = 'center';
+            ctx.fillText('按任意键开始冒险...', w/2, h/2 + 80);
+        }
+    }
+};
+
+
+// main.js - Main game loop and state management
+const Game = {
+    state: 'intro', // intro, playing, dialogue, shop, combat, gameover
+    canvas: null,
+    ctx: null,
+    lastTime: 0,
+    gameTime: 0,
+    keys: {},
+    moveTimer: 0,
+    MOVE_DELAY: 0.08, // seconds between moves (fast)
+    camera: { x: 0, y: 0 },
+    saveKey: 'xiaoniantu_save',
+    
+    // Visual effects
+    effects: [],
+    screenFlash: 0,
+    screenFlashColor: '#ff0000',
+
+    init() {
+        // Setup game canvas
+        this.canvas = document.getElementById('game-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.canvas.width = 800;
+        this.canvas.height = 600;
+
+        // Setup audio
+        Audio.init();
+
+        // Preload speech synthesis voices
+        if (window.speechSynthesis) {
+            window.speechSynthesis.getVoices();
+            window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+        }
+
+        // Setup intro
+        Animation.init();
+
+        // Setup input
+        this.setupInput();
+        UI.setupDialogueInput();
+
+        // Setup buttons
+        document.getElementById('skip-intro').onclick = () => {
+            Animation.skip();
+            this.startGame();
+        };
+
+        document.getElementById('shop-close').onclick = () => {
+            Shop.closeShop();
+        };
+
+        document.getElementById('gameover-restart').onclick = () => {
+            this.resetGame();
+        };
+
+        // Try to load save
+        this.checkSave();
+
+        // Start game loop
+        this.lastTime = performance.now();
+        requestAnimationFrame((t) => this.gameLoop(t));
+    },
+
+    setupInput() {
+        document.addEventListener('keydown', (e) => {
+            this.keys[e.key] = true;
+
+            // Skip intro on any key during title phase
+            if (this.state === 'intro' && Animation.phase >= Animation.phases.length - 1) {
+                Animation.skip();
+                this.startGame();
+            }
+
+            // Resume audio on first interaction
+            if (typeof Audio !== 'undefined' && Audio.ctx) {
+                Audio.resume();
+                if (!Audio.musicPlaying && this.state === 'playing') {
+                    Audio.startMusic();
+                }
+            }
+
+            // Combat attack
+            if (this.state === 'playing' && Combat.active && (e.key === ' ' || e.key === 'z' || e.key === 'Z')) {
+                this.handleCombatAttack();
+            }
+
+            // Interact with NPC
+            if (this.state === 'playing' && !Combat.active && (e.key === 'e' || e.key === 'E' || e.key === 'Enter')) {
+                this.handleInteract();
+            }
+
+            // Help key
+            if (e.key === 'h' || e.key === 'H') {
+                if (this.state === 'playing' || this.state === 'dialogue') {
+                    this.toggleHelp();
+                }
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            this.keys[e.key] = false;
+        });
+    },
+
+    checkSave() {
+        try {
+            const save = localStorage.getItem(this.saveKey);
+            if (save) {
+                const data = JSON.parse(save);
+                // We have a save, will ask player if they want to continue
+                this.hasSave = true;
+                this.saveData = data;
+            }
+        } catch (e) {
+            this.hasSave = false;
+        }
+    },
+
+    saveGame() {
+        try {
+            const data = Player.serialize();
+            localStorage.setItem(this.saveKey, JSON.stringify(data));
+        } catch (e) {
+            // Save failed, ignore
+        }
+    },
+
+    loadGame() {
+        if (this.saveData) {
+            Player.deserialize(this.saveData);
+            World.loadZone(this.saveData.currentZone || 'start');
+            NPCSystem.loadNPCs(World.currentZone);
+            Combat.loadEnemies(World.currentZone);
+        }
+    },
+
+    resetGame() {
+        localStorage.removeItem(this.saveKey);
+        // Reset player
+        Player.tileX = 4;
+        Player.tileY = 10;
+        Player.sizeMM = 5;
+        Player.hp = 100;
+        Player.maxHP = 100;
+        Player.coins = 0;
+        Player.hasPet = false;
+        Player.petPower = 0;
+        Player.attackPower = 5;
+        Player.hasGiantClay = false;
+        Player.fungiDefeated = 0;
+        Player.fungiChallengeActive = false;
+        Player.fungiChallengeComplete = false;
+        Player.fungiChallengeTriggered = false;
+        Player.bossDefeated = false;
+        Player.friendRescued = false;
+        Player.visitedZones = new Set(['start']);
+        Player.moving = false;
+
+        // Hide game over
+        document.getElementById('gameover-screen').classList.remove('active');
+        document.getElementById('gameover-screen').classList.add('hidden');
+
+        this.startGame();
+    },
+
+    startGame() {
+        // Hide intro, show game
+        document.getElementById('intro-screen').classList.remove('active');
+        document.getElementById('game-screen').classList.add('active');
+
+        if (this.hasSave) {
+            this.loadGame();
+        } else {
+            // New game
+            World.loadZone('start');
+            NPCSystem.loadNPCs('start');
+            Combat.loadEnemies('start');
+            Player.init();
+        }
+
+        this.state = 'playing';
+        UI.updateHUD();
+        UI.drawMinimap();
+    },
+
+    gameLoop(timestamp) {
+        const dt = Math.min((timestamp - this.lastTime) / 1000, 0.1);
+        this.lastTime = timestamp;
+        this.gameTime += dt;
+
+        this.update(dt);
+        this.render();
+
+        requestAnimationFrame((t) => this.gameLoop(t));
+    },
+
+    update(dt) {
+        switch (this.state) {
+            case 'intro':
+                if (Animation.update(dt)) {
+                    this.startGame();
+                }
+                break;
+
+            case 'playing':
+                this.updatePlaying(dt);
+                break;
+
+            case 'dialogue':
+                // Game paused during dialogue, only update visuals
+                Player.update(dt);
+                World.updateWaterDrops(dt);
+                break;
+        }
+    },
+
+    updatePlaying(dt) {
+        // Handle movement (block during shop/dialogue overlays)
+        this.moveTimer -= dt;
+        if (this.moveTimer <= 0 && !Combat.active && !Shop.isOpen) {
+            let dx = 0, dy = 0;
+            if (this.keys['ArrowUp'] || this.keys['w'] || this.keys['W']) dy = -1;
+            else if (this.keys['ArrowDown'] || this.keys['s'] || this.keys['S']) dy = 1;
+            else if (this.keys['ArrowLeft'] || this.keys['a'] || this.keys['A']) dx = -1;
+            else if (this.keys['ArrowRight'] || this.keys['d'] || this.keys['D']) dx = 1;
+
+            if (dx !== 0 || dy !== 0) {
+                const result = Player.tryMove(dx, dy);
+                if (result) {
+                    this.moveTimer = this.MOVE_DELAY;
+
+                    if (result.type === 'portal') {
+                        this.handlePortal(result.tileX, result.tileY);
+                    } else if (result.type === 'move') {
+                        this.handlePlayerMoved();
+                    }
+                }
+            }
+        }
+
+        // Update player smooth movement
+        Player.update(dt);
+
+        // Update camera
+        this.updateCamera();
+
+        // Always update enemy movement
+        Combat.updateEnemyMovement(dt);
+
+        // Combat update
+        if (Combat.active) {
+            const combatResult = Combat.update(dt);
+            if (combatResult) {
+                this.handleCombatResult(combatResult);
+            }
+        }
+
+        // Check for nearby enemies
+        if (!Combat.active) {
+            const enemy = Combat.getEnemyNear(Player.tileX, Player.tileY, 1);
+            if (enemy) {
+                Combat.startCombat(enemy);
+                UI.showCombatHUD(enemy);
+            }
+        }
+
+        // Fungi wave spawning
+        if (Player.fungiChallengeActive && Combat.needsNewWave()) {
+            Combat.spawnFungiWave();
+        }
+
+        // Water drops in desert
+        World.updateWaterDrops(dt);
+
+        // Update visual effects
+        this.updateEffects(dt);
+        if (this.screenFlash > 0) this.screenFlash -= dt * 4;
+
+        // Auto-save every 30 seconds
+        if (Math.floor(this.gameTime) % 30 === 0 && Math.floor(this.gameTime) !== this.lastSaveTime) {
+            this.lastSaveTime = Math.floor(this.gameTime);
+            this.saveGame();
+        }
+
+        // Update HUD
+        UI.updateHUD();
+    },
+
+    handlePlayerMoved() {
+        const tileX = Player.tileX;
+        const tileY = Player.tileY;
+
+        // Collect items
+        const itemIdx = World.getNearbyItem(tileX, tileY);
+        if (itemIdx >= 0) {
+            const item = World.items[itemIdx];
+            World.items.splice(itemIdx, 1);
+            if (item.type === 'clay') {
+                Player.grow(1);
+                Audio.playSFX('collect');
+                UI.showNotification('+1mm 粘土！');
+            } else if (item.type === 'coin') {
+                Player.coins += 5;
+                Audio.playSFX('coin');
+                UI.showNotification('+5 金币！');
+            }
+        }
+
+        // Desert shrink
+        if (World.isDesert()) {
+            if (Shop.desertShield > 0) {
+                Shop.desertShield--;
+                UI.showNotification(`防沙护盾保护中... (${Shop.desertShield}步剩余)`);
+            } else {
+                const dead = Player.shrink(1);
+                World.addWaterDrop(tileX * TILE_SIZE + TILE_SIZE / 2, tileY * TILE_SIZE + TILE_SIZE / 2);
+                if (Player.sizeMM % 10 === 0) {
+                    UI.showNotification(`💧 沙漠消耗！体型: ${Player.getSizeDisplay()}`);
+                }
+                if (dead) {
+                    this.gameOver(false);
+                }
+            }
+        }
+
+        // Check special tiles
+        const tile = World.getTile(tileX, tileY);
+        if (tile === 'shop') {
+            Shop.openRealShop();
+        }
+
+        // Danger house
+        if (tile === 'house_danger') {
+            const dialogue = NPCSystem.startDialogue('danger_house');
+            if (dialogue) {
+                this.state = 'dialogue';
+                UI.showDialogue(dialogue, (result) => this.handleDialogueResult(result, 'danger_house'));
+            }
+        }
+
+        // Fungi cave trigger
+        if (World.currentZone === 'fungus_cave' && !Player.fungiChallengeActive && !Player.fungiChallengeComplete && !Player.fungiChallengeTriggered) {
+            if (tileX > 5 && tileY > 5) {
+                Player.fungiChallengeTriggered = true;
+                const dialogue = NPCSystem.startDialogue('fungi_challenge');
+                if (dialogue) {
+                    this.state = 'dialogue';
+                    UI.showDialogue(dialogue, (result) => this.handleDialogueResult(result, 'fungi_challenge'));
+                }
+            }
+        }
+
+        // Boss encounter
+        if (World.currentZone === 'mountain' && !Player.bossDefeated) {
+            const boss = Combat.enemies.find(e => e.type === 'boss' && e.alive);
+            if (boss && Math.abs(boss.x - tileX) <= 3 && Math.abs(boss.y - tileY) <= 3) {
+                if (Player.sizeMM < 15000) {
+                    UI.showNotification('⚠️ 你还不够强大！需要15米才能挑战巨兽！');
+                } else if (!Combat.active) {
+                    const dialogue = NPCSystem.startDialogue('boss_encounter');
+                    if (dialogue) {
+                        this.state = 'dialogue';
+                        UI.showDialogue(dialogue, (result) => this.handleDialogueResult(result, 'boss_encounter'));
+                    }
+                }
+            }
+        }
+
+        // Minimap update
+        UI.drawMinimap();
+    },
+
+    handlePortal(tileX, tileY) {
+        const dest = World.getPortalDestination(tileX, tileY);
+        if (!dest) return;
+
+        // Check size requirement
+        const destZone = ZONES[dest.zone];
+        if (destZone && destZone.requireSize && Player.sizeMM < destZone.requireSize) {
+            UI.showNotification(`⚠️ 需要体型达到 ${destZone.requireSize >= 1000 ? (destZone.requireSize/1000) + '米' : destZone.requireSize + 'mm'} 才能进入！`);
+            // Move back
+            Player.tileX -= (tileX - Player.tileX);
+            Player.tileY -= (tileY - Player.tileY);
+            Player.pixelX = Player.tileX * TILE_SIZE + TILE_SIZE / 2;
+            Player.pixelY = Player.tileY * TILE_SIZE + TILE_SIZE / 2;
+            return;
+        }
+
+        // Transition to new zone
+        World.loadZone(dest.zone);
+        NPCSystem.loadNPCs(dest.zone);
+        Combat.loadEnemies(dest.zone);
+        Player.tileX = dest.spawnX;
+        Player.tileY = dest.spawnY;
+        Player.pixelX = Player.tileX * TILE_SIZE + TILE_SIZE / 2;
+        Player.pixelY = Player.tileY * TILE_SIZE + TILE_SIZE / 2;
+        Player.targetX = Player.pixelX;
+        Player.targetY = Player.pixelY;
+        Player.moving = false;
+        Player.visitedZones.add(dest.zone);
+
+        UI.showZoneTransition(ZONES[dest.zone].name);
+        Audio.playSFX('portal');
+        UI.updateHUD();
+        UI.drawMinimap();
+        this.saveGame();
+    },
+
+    handleInteract() {
+        const npc = NPCSystem.getNPCAt(Player.tileX, Player.tileY);
+        if (npc) {
+            const dialogue = NPCSystem.startDialogue(npc.dialogue);
+            if (dialogue) {
+                this.state = 'dialogue';
+                UI.showDialogue(dialogue, (result) => this.handleDialogueResult(result, npc.dialogue));
+            }
+        }
+    },
+
+    handleDialogueResult(result, dialogueId) {
+        if (result.type === 'choice') {
+            const choice = result.choice;
+
+            // Apply effect
+            if (choice.effect) {
+                NPCSystem.applyEffect(choice.effect);
+
+                // Special effects
+                if (choice.effect.combat) {
+                    this.state = 'playing';
+                    // Start combat with bad NPC
+                    const fakeEnemy = {
+                        type: 'slime', x: Player.tileX, y: Player.tileY + 1,
+                        hp: 30, maxHp: 30, damage: 5, alive: true, id: 999, hitFlash: 0
+                    };
+                    Combat.enemies.push(fakeEnemy);
+                    Combat.startCombat(fakeEnemy);
+                    UI.showCombatHUD(fakeEnemy);
+                    return;
+                }
+
+                if (choice.effect.startFungiChallenge) {
+                    Player.fungiChallengeActive = true;
+                    Combat.spawnFungiWave();
+                    this.state = 'playing';
+                    UI.showNotification('🍄 菌窟挑战开始！击败100只小菌！');
+                    return;
+                }
+
+                if (choice.effect.startBoss) {
+                    const boss = Combat.enemies.find(e => e.type === 'boss' && e.alive);
+                    if (boss) {
+                        Combat.startCombat(boss);
+                        UI.showCombatHUD(boss);
+                    }
+                    this.state = 'playing';
+                    return;
+                }
+
+                if (choice.effect.victory) {
+                    this.gameOver(true);
+                    return;
+                }
+            }
+
+            // Continue to next dialogue
+            if (choice.next) {
+                const nextDialogue = NPCSystem.getDialogue(choice.next);
+                if (nextDialogue) {
+                    UI.showDialogue(nextDialogue, (r) => this.handleDialogueResult(r, choice.next));
+                    return;
+                }
+            }
+        } else if (result.type === 'text') {
+            // Handle typed input
+            const response = NPCSystem.processKeywordInput(result.text, dialogueId);
+            if (response) {
+                if (response.next) {
+                    const nextDialogue = NPCSystem.getDialogue(response.next);
+                    if (nextDialogue) {
+                        UI.showDialogue(nextDialogue, (r) => this.handleDialogueResult(r, response.next));
+                        return;
+                    }
+                }
+                // Show response as a simple dialogue
+                UI.showDialogue({
+                    speaker: '回应',
+                    text: response.text,
+                    choices: [{ text: '（继续）', next: null }]
+                }, (r) => {
+                    if (response.effect) NPCSystem.applyEffect(response.effect);
+                    this.state = 'playing';
+                });
+                return;
+            }
+        }
+
+        // Return to playing
+        this.state = 'playing';
+        UI.updateHUD();
+    },
+
+    handleCombatAttack() {
+        const result = Combat.playerAttack();
+        if (!result) return;
+
+        // Spawn pink attack wave effect
+        const enemy = Combat.currentEnemy || result.enemy;
+        if (enemy) {
+            const ex = enemy.pixelX || (enemy.x * TILE_SIZE + TILE_SIZE / 2);
+            const ey = enemy.pixelY || (enemy.y * TILE_SIZE + TILE_SIZE / 2);
+            this.spawnAttackEffect(Player.pixelX, Player.pixelY, ex, ey, 'player_attack');
+            this.spawnDamageNumber(ex, ey, result.damage || 0, false);
+            Audio.playSFX('hit');
+        }
+
+        if (result.type === 'kill') {
+            UI.hideCombatHUD();
+            UI.showNotification(result.rewards.message);
+            UI.updateHUD();
+
+            // Check boss defeat
+            if (Player.bossDefeated) {
+                setTimeout(() => {
+                    const dialogue = NPCSystem.startDialogue('victory');
+                    if (dialogue) {
+                        this.state = 'dialogue';
+                        UI.showDialogue(dialogue, (r) => this.handleDialogueResult(r, 'victory'));
+                    }
+                }, 1000);
+            }
+
+            // Update fungi counter
+            if (Player.fungiChallengeActive) {
+                UI.updateFungiCount();
+                if (Player.fungiDefeated >= 100) {
+                    UI.showNotification('🎉 恭喜！获得巨型粘土！+10米！');
+                }
+            }
+        } else if (result.type === 'hit') {
+            UI.updateEnemyHP(Combat.currentEnemy);
+        }
+    },
+
+    handleCombatResult(result) {
+        if (result.type === 'player_dead') {
+            // Final death hit effect
+            Audio.playSFX('damage');
+            this.spawnAttackEffect(
+                result.enemyX || Player.pixelX, result.enemyY || Player.pixelY,
+                Player.pixelX, Player.pixelY, 'enemy_attack'
+            );
+            this.spawnDamageNumber(Player.pixelX, Player.pixelY, result.damage || 0, true);
+            Combat.endCombat();
+            UI.hideCombatHUD();
+            setTimeout(() => this.gameOver(false), 500);
+        } else if (result.type === 'enemy_attack') {
+            // Enemy hits player - red wave + damage sound
+            Audio.playSFX('damage');
+            this.spawnAttackEffect(
+                result.enemyX || Player.pixelX, result.enemyY || Player.pixelY,
+                Player.pixelX, Player.pixelY, 'enemy_attack'
+            );
+            this.spawnDamageNumber(Player.pixelX, Player.pixelY, result.damage, true);
+            this.screenFlash = 1;
+            this.screenFlashColor = '#ff0000';
+            UI.updateHUD();
+        }
+    },
+
+    updateCamera() {
+        const zone = ZONES[World.currentZone];
+        if (!zone) return;
+
+        const targetCamX = Player.pixelX - this.canvas.width / 2;
+        const targetCamY = Player.pixelY - this.canvas.height / 2;
+
+        // Clamp camera
+        const maxX = zone.width * TILE_SIZE - this.canvas.width;
+        const maxY = zone.height * TILE_SIZE - this.canvas.height;
+
+        this.camera.x += (targetCamX - this.camera.x) * 0.1;
+        this.camera.y += (targetCamY - this.camera.y) * 0.1;
+
+        this.camera.x = Math.max(0, Math.min(maxX, this.camera.x));
+        this.camera.y = Math.max(0, Math.min(maxY, this.camera.y));
+    },
+
+    render() {
+        switch (this.state) {
+            case 'intro':
+                Animation.render();
+                break;
+
+            case 'playing':
+            case 'dialogue':
+            case 'shop':
+            case 'combat':
+                this.renderGame();
+                break;
+        }
+    },
+
+    renderGame() {
+        const ctx = this.ctx;
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+
+        // Clear
+        ctx.fillStyle = ZONES[World.currentZone]?.bgColor || '#333';
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.save();
+        ctx.translate(-this.camera.x, -this.camera.y);
+
+        // Draw tiles
+        const startTileX = Math.floor(this.camera.x / TILE_SIZE);
+        const startTileY = Math.floor(this.camera.y / TILE_SIZE);
+        const endTileX = startTileX + Math.ceil(w / TILE_SIZE) + 1;
+        const endTileY = startTileY + Math.ceil(h / TILE_SIZE) + 1;
+
+        for (let y = startTileY; y <= endTileY; y++) {
+            for (let x = startTileX; x <= endTileX; x++) {
+                const tile = World.getTile(x, y);
+                if (tile) {
+                    Assets.drawTile(ctx, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, tile);
+                }
+            }
+        }
+
+        // Draw water drops (desert)
+        World.waterDrops.forEach(drop => {
+            Assets.drawWaterDrop(ctx, drop.x, drop.y, drop.alpha);
+        });
+
+        // Draw items
+        World.items.forEach(item => {
+            const ix = item.x * TILE_SIZE + TILE_SIZE / 2;
+            const iy = item.y * TILE_SIZE + TILE_SIZE / 2;
+            if (item.type === 'clay') {
+                Assets.drawClayDrop(ctx, ix, iy, this.gameTime);
+            } else if (item.type === 'coin') {
+                Assets.drawCoin(ctx, ix, iy, this.gameTime);
+            } else if (item.type === 'giant_clay') {
+                Assets.drawGiantClay(ctx, ix, iy, this.gameTime);
+            }
+        });
+
+        // Draw NPCs
+        NPCSystem.npcs.forEach(npc => {
+            const nx = npc.x * TILE_SIZE + TILE_SIZE / 2;
+            const ny = npc.y * TILE_SIZE + TILE_SIZE / 2;
+            Assets.drawNPC(ctx, nx, ny, npc.type, this.gameTime);
+        });
+
+        // Draw enemies
+        Combat.enemies.forEach(enemy => {
+            if (!enemy.alive) return;
+            const ex = enemy.pixelX || (enemy.x * TILE_SIZE + TILE_SIZE / 2);
+            const ey = enemy.pixelY || (enemy.y * TILE_SIZE + TILE_SIZE / 2);
+
+            if (enemy.hitFlash > 0) {
+                ctx.globalAlpha = 0.5 + Math.sin(this.gameTime * 20) * 0.5;
+            }
+            Assets.drawEnemy(ctx, ex, ey, enemy.type, this.gameTime, enemy.hp, enemy.maxHp);
+            ctx.globalAlpha = 1;
+
+            // Draw power level above enemy head
+            if (enemy.level) {
+                const levelColors = ['', '#4CAF50', '#8BC34A', '#FFC107', '#FF9800', '#f44336'];
+                const lvl = enemy.level;
+                ctx.font = 'bold 11px Microsoft YaHei';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#000';
+                ctx.fillText(`⚔${lvl}`, ex + 1, ey - 18 + 1);
+                ctx.fillStyle = levelColors[lvl] || '#fff';
+                ctx.fillText(`⚔${lvl}`, ex, ey - 18);
+            }
+        });
+
+        // Draw player
+        Assets.drawPlayer(ctx, Player.pixelX, Player.pixelY, Player.sizeMM, Player.stage);
+
+        // Draw pet
+        if (Player.hasPet) {
+            const petOffsetX = Math.cos(this.gameTime * 2) * 20;
+            const petOffsetY = Math.sin(this.gameTime * 2) * 15;
+            Assets.drawPet(ctx, Player.pixelX + petOffsetX, Player.pixelY - 20 + petOffsetY, Player.petPower, this.gameTime);
+        }
+
+        // Draw attack/damage effects
+        this.renderEffects(ctx);
+
+        ctx.restore();
+
+        // Draw interaction hint
+        if (!Combat.active) {
+            const npc = NPCSystem.getNPCAt(Player.tileX, Player.tileY);
+            if (npc) {
+                ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                ctx.fillRect(w/2 - 80, h - 40, 160, 30);
+                ctx.fillStyle = '#ffb6c1';
+                ctx.font = '13px Microsoft YaHei';
+                ctx.textAlign = 'center';
+                ctx.fillText('按 E 或 Enter 对话', w/2, h - 20);
+            }
+        }
+
+        // Combat hint
+        if (Combat.active) {
+            ctx.fillStyle = 'rgba(0,0,0,0.7)';
+            ctx.fillRect(w/2 - 100, h - 40, 200, 30);
+            ctx.fillStyle = '#ff6666';
+            ctx.font = '13px Microsoft YaHei';
+            ctx.textAlign = 'center';
+            ctx.fillText('按 空格/Z 攻击！', w/2, h - 20);
+        }
+
+        // Screen damage flash
+        if (this.screenFlash > 0) {
+            ctx.globalAlpha = this.screenFlash * 0.3;
+            ctx.fillStyle = this.screenFlashColor;
+            ctx.fillRect(0, 0, w, h);
+            ctx.globalAlpha = 1;
+        }
+    },
+
+    // === Visual Effects System ===
+    spawnAttackEffect(fromX, fromY, toX, toY, type) {
+        // type: 'player_attack' (pink wave) or 'enemy_attack' (red wave)
+        const color = type === 'player_attack' ? '#ff69b4' : '#ff3333';
+        const color2 = type === 'player_attack' ? '#ffb6c1' : '#ff6666';
+        
+        // Expanding ring wave
+        this.effects.push({
+            type: 'wave',
+            x: toX,
+            y: toY,
+            radius: 5,
+            maxRadius: 40,
+            alpha: 1,
+            color: color,
+            color2: color2,
+            life: 0.4,
+            maxLife: 0.4,
+        });
+        
+        // Particles flying from attacker to target
+        const dx = toX - fromX;
+        const dy = toY - fromY;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        for (let i = 0; i < 6; i++) {
+            const angle = Math.atan2(dy, dx) + (Math.random() - 0.5) * 0.8;
+            const speed = 150 + Math.random() * 100;
+            this.effects.push({
+                type: 'particle',
+                x: fromX,
+                y: fromY,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                alpha: 1,
+                color: color,
+                size: 3 + Math.random() * 4,
+                life: 0.3 + Math.random() * 0.2,
+                maxLife: 0.5,
+            });
+        }
+        
+        // Impact flash at target
+        this.effects.push({
+            type: 'flash',
+            x: toX,
+            y: toY,
+            alpha: 1,
+            size: 20,
+            color: color2,
+            life: 0.2,
+            maxLife: 0.2,
+        });
+    },
+
+    spawnDamageNumber(x, y, damage, isPlayer) {
+        this.effects.push({
+            type: 'damage_number',
+            x: x + (Math.random() - 0.5) * 10,
+            y: y - 10,
+            vy: -60,
+            text: `-${damage}`,
+            color: isPlayer ? '#ff3333' : '#ffff00',
+            alpha: 1,
+            life: 0.8,
+            maxLife: 0.8,
+        });
+    },
+
+    updateEffects(dt) {
+        for (let i = this.effects.length - 1; i >= 0; i--) {
+            const e = this.effects[i];
+            e.life -= dt;
+            if (e.life <= 0) {
+                this.effects.splice(i, 1);
+                continue;
+            }
+            
+            const progress = 1 - (e.life / e.maxLife);
+            e.alpha = e.life / e.maxLife;
+            
+            switch (e.type) {
+                case 'wave':
+                    e.radius = 5 + (e.maxRadius - 5) * progress;
+                    break;
+                case 'particle':
+                    e.x += e.vx * dt;
+                    e.y += e.vy * dt;
+                    e.size *= 0.95;
+                    break;
+                case 'flash':
+                    e.size = 20 * (1 + progress * 0.5);
+                    break;
+                case 'damage_number':
+                    e.y += e.vy * dt;
+                    e.vy += 30 * dt;
+                    break;
+            }
+        }
+    },
+
+    renderEffects(ctx) {
+        for (const e of this.effects) {
+            ctx.globalAlpha = e.alpha;
+            switch (e.type) {
+                case 'wave':
+                    // Double ring for extra oomph
+                    ctx.beginPath();
+                    ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
+                    ctx.strokeStyle = e.color;
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(e.x, e.y, e.radius * 0.6, 0, Math.PI * 2);
+                    ctx.strokeStyle = e.color2;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    break;
+                case 'particle':
+                    ctx.beginPath();
+                    ctx.arc(e.x, e.y, e.size, 0, Math.PI * 2);
+                    ctx.fillStyle = e.color;
+                    ctx.fill();
+                    break;
+                case 'flash':
+                    const grad = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, e.size);
+                    grad.addColorStop(0, e.color);
+                    grad.addColorStop(1, 'transparent');
+                    ctx.beginPath();
+                    ctx.arc(e.x, e.y, e.size, 0, Math.PI * 2);
+                    ctx.fillStyle = grad;
+                    ctx.fill();
+                    break;
+                case 'damage_number':
+                    ctx.font = 'bold 14px Microsoft YaHei';
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = e.color;
+                    ctx.fillText(e.text, e.x, e.y);
+                    // Outline for readability
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 1;
+                    ctx.strokeText(e.text, e.x, e.y);
+                    break;
+            }
+        }
+        ctx.globalAlpha = 1;
+        ctx.lineWidth = 1;
+    },
+
+    gameOver(victory) {
+        this.state = 'gameover';
+        if (victory) {
+            Audio.playSFX('victory');
+            this.saveGame();
+        } else {
+            localStorage.removeItem(this.saveKey);
+        }
+        UI.showGameOver(victory);
+    },
+
+    helpVisible: false,
+    childrenMode: false,
+    hoverReadTimer: null,
+    hoverTarget: null,
+
+    toggleHelp() {
+        this.helpVisible = !this.helpVisible;
+        if (this.helpVisible) {
+            UI.showHelp(this.getProgressHint(), this.childrenMode);
+        } else {
+            UI.hideHelp();
+        }
+    },
+
+    toggleChildrenMode() {
+        this.childrenMode = !this.childrenMode;
+        if (this.childrenMode) {
+            this.setupHoverRead();
+            UI.showNotification('🧒 儿童模式已开启！鼠标悬停文字2秒后会朗读');
+        } else {
+            this.removeHoverRead();
+            if (window.speechSynthesis) window.speechSynthesis.cancel();
+            UI.showNotification('儿童模式已关闭');
+        }
+        // Refresh help overlay if visible
+        if (this.helpVisible) {
+            UI.showHelp(this.getProgressHint(), this.childrenMode);
+        }
+    },
+
+    setupHoverRead() {
+        // Add hover listeners to the game container
+        const container = document.getElementById('game-container') || document.body;
+        container.addEventListener('mouseover', this._hoverReadHandler = (e) => {
+            if (!this.childrenMode) return;
+            const target = e.target;
+            if (!target || !target.textContent || target.textContent.trim().length < 2) return;
+            // Only read text elements (not the whole container)
+            if (target.tagName === 'DIV' && target.children.length > 3) return;
+            
+            this.hoverTarget = target;
+            clearTimeout(this.hoverReadTimer);
+            this.hoverReadTimer = setTimeout(() => {
+                if (this.hoverTarget === target && this.childrenMode) {
+                    this.speakText(target.textContent.trim());
+                }
+            }, 2000);
+        });
+        container.addEventListener('mouseout', this._hoverOutHandler = (e) => {
+            clearTimeout(this.hoverReadTimer);
+            this.hoverTarget = null;
+        });
+    },
+
+    removeHoverRead() {
+        const container = document.getElementById('game-container') || document.body;
+        if (this._hoverReadHandler) {
+            container.removeEventListener('mouseover', this._hoverReadHandler);
+            container.removeEventListener('mouseout', this._hoverOutHandler);
+        }
+        clearTimeout(this.hoverReadTimer);
+    },
+
+    speakText(text) {
+        if (!window.speechSynthesis) return;
+        window.speechSynthesis.cancel();
+        
+        // Limit text length
+        const readText = text.length > 100 ? text.substring(0, 100) + '...' : text;
+        
+        const utterance = new SpeechSynthesisUtterance(readText);
+        utterance.lang = 'zh-CN';
+        utterance.rate = 0.8;    // Natural speaking pace, not too fast
+        utterance.pitch = 1.2;   // Slightly higher, warm & gentle like 温柔桃子
+        utterance.volume = 0.85; // Soft and comfortable
+        
+        // Find the best Chinese female voice (closest to 温柔桃子 feel)
+        const voices = window.speechSynthesis.getVoices();
+        const preferredVoice = 
+            // macOS: prefer "Ting-Ting" which is soft and natural
+            voices.find(v => v.name.includes('Ting-Ting')) ||
+            // Other soft Chinese voices
+            voices.find(v => v.lang === 'zh-CN' && /ting|xiao|mei|liang|female/i.test(v.name)) ||
+            voices.find(v => v.lang === 'zh-CN') ||
+            voices.find(v => v.lang.startsWith('zh')) ||
+            null;
+        if (preferredVoice) utterance.voice = preferredVoice;
+        
+        window.speechSynthesis.speak(utterance);
+    },
+
+    // === Save Slot System (10 slots) ===
+    SAVE_SLOTS_KEY: 'xiaoniantu_slots',
+    MAX_SLOTS: 10,
+
+    getSaveSlots() {
+        try {
+            const data = localStorage.getItem(this.SAVE_SLOTS_KEY);
+            return data ? JSON.parse(data) : {};
+        } catch (e) {
+            return {};
+        }
+    },
+
+    saveToSlot(slotId) {
+        const slots = this.getSaveSlots();
+        const data = Player.serialize();
+        data.savedAt = new Date().toLocaleString('zh-CN');
+        data.slotName = `存档 ${slotId}`;
+        slots[slotId] = data;
+        try {
+            localStorage.setItem(this.SAVE_SLOTS_KEY, JSON.stringify(slots));
+            UI.showNotification(`💾 已保存到存档 ${slotId}！`);
+            Audio.playSFX('collect');
+        } catch (e) {
+            UI.showNotification('❌ 保存失败！');
+        }
+        // Refresh help if open
+        if (this.helpVisible) {
+            UI.showHelp(this.getProgressHint(), this.childrenMode);
+        }
+    },
+
+    loadFromSlot(slotId) {
+        const slots = this.getSaveSlots();
+        const data = slots[slotId];
+        if (!data) {
+            UI.showNotification('❌ 该存档为空！');
+            return;
+        }
+        Player.deserialize(data);
+        World.loadZone(data.currentZone || 'start');
+        NPCSystem.loadNPCs(World.currentZone);
+        Combat.loadEnemies(World.currentZone);
+        Player.updateStage();
+        this.updateCamera();
+        UI.updateHUD();
+        UI.showNotification(`📂 已读取存档 ${slotId}！`);
+        Audio.playSFX('portal');
+        // Close help
+        this.helpVisible = false;
+        UI.hideHelp();
+    },
+
+    deleteSlot(slotId) {
+        const slots = this.getSaveSlots();
+        if (!slots[slotId]) return;
+        delete slots[slotId];
+        try {
+            localStorage.setItem(this.SAVE_SLOTS_KEY, JSON.stringify(slots));
+            UI.showNotification(`🗑️ 存档 ${slotId} 已删除`);
+        } catch (e) {}
+        // Refresh help
+        if (this.helpVisible) {
+            UI.showHelp(this.getProgressHint(), this.childrenMode);
+        }
+    },
+
+    getProgressHint() {
+        const size = Player.sizeMM;
+        const zone = World.currentZone;
+        let hint = '';
+
+        if (size < 50) {
+            hint = '💡 当前目标：在草原收集粘土球成长！每个+1mm。往右走去草原探索。';
+        } else if (size < 200 && !Player.hasPet) {
+            hint = '💡 去海边沙滩找到金色NPC获得宠物伙伴！往草原东边走。';
+        } else if (size < 200) {
+            hint = '💡 继续收集粘土成长，准备好再去沙漠。建议体型200mm以上再去南边沙漠。';
+        } else if (zone !== 'fungus_cave' && !Player.fungiChallengeComplete && size < 5000) {
+            hint = '💡 穿过沙漠去菌窟！击败100只小菌可获得巨型粘土(+10米)。沙漠每步-1mm，做好准备！';
+        } else if (Player.fungiChallengeActive) {
+            hint = `💡 菌窟挑战中！已击败 ${Player.fungiDefeated}/100 只小菌。继续战斗！`;
+        } else if (Player.hasGiantClay && size < 15000) {
+            hint = '💡 已获得巨型粘土！继续收集粘土达到15米，然后去山林挑战终极Boss！';
+        } else if (size >= 15000 && !Player.bossDefeated) {
+            hint = '💡 你已经15米了！去山林终极区挑战大怪兽，救出你的好朋友！';
+        } else if (Player.bossDefeated) {
+            hint = '💡 你打败了怪兽！找到好朋友完成救援！';
+        } else {
+            hint = '💡 探索地图，收集粘土成长，对话NPC获取线索。目标：15米打败Boss！';
+        }
+
+        return hint;
+    }
+};
+
+// Start the game when page loads
+window.addEventListener('load', () => {
+    Game.init();
+});
+
+</script>
+</body>
+</html>
