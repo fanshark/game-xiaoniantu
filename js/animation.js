@@ -8,14 +8,14 @@ const Animation = {
     skipped: false,
     particles: [],
 
-    // Animation phases (dramatic pacing)
+    // Animation phases (slow, cinematic pacing)
     phases: [
-        { duration: 5, name: 'spin' },        // Pink clay spinning with particles
-        { duration: 7, name: 'story1' },       // Intro story - happy world
-        { duration: 7, name: 'story2' },       // Friend kidnapped - dramatic
-        { duration: 7, name: 'story3' },       // Determination - inspiring
-        { duration: 6, name: 'preview' },      // Adventure preview - epic
-        { duration: 4, name: 'title' },        // Title display - grand
+        { duration: 10, name: 'spin' },       // Pink clay spinning with particles
+        { duration: 14, name: 'story1' },     // Intro story - happy world
+        { duration: 14, name: 'story2' },     // Friend kidnapped - dramatic
+        { duration: 14, name: 'story3' },     // Determination - inspiring
+        { duration: 12, name: 'preview' },    // Adventure preview - epic
+        { duration: 8, name: 'title' },       // Title display - grand
     ],
 
     storyTexts: [

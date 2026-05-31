@@ -90,19 +90,23 @@ const Audio = {
     scheduleIntroMusic() {
         if (!this.introMusicPlaying || !this.ctx) return;
 
-        const beatDuration = 60 / 72; // Slow tempo (72 BPM)
+        const beatDuration = 60 / 56; // Very slow dreamy tempo (56 BPM)
 
         while (this.introNextNoteTime < this.ctx.currentTime + 0.5) {
             const melodyNote = this.introMelody[this.introNoteIndex % this.introMelody.length];
             const bassNote = this.introBass[this.introNoteIndex % this.introBass.length];
 
-            // Melody - sine wave (soft, dreamlike)
-            this.playTone(melodyNote, this.introNextNoteTime, beatDuration * 1.2, 'sine', 0.1);
-            // Bass - triangle wave (warm)
-            this.playTone(bassNote, this.introNextNoteTime, beatDuration * 1.5, 'triangle', 0.06);
-            // Shimmer - high octave sine (twinkle)
-            if (this.introNoteIndex % 3 === 0) {
-                this.playTone(melodyNote * 2, this.introNextNoteTime + beatDuration * 0.3, beatDuration * 0.6, 'sine', 0.03);
+            // Melody - sine wave (soft, dreamlike, longer sustain)
+            this.playTone(melodyNote, this.introNextNoteTime, beatDuration * 1.5, 'sine', 0.12);
+            // Bass - triangle wave (warm, sustained)
+            this.playTone(bassNote, this.introNextNoteTime, beatDuration * 2.0, 'triangle', 0.07);
+            // Shimmer - high octave sine (gentle twinkle)
+            if (this.introNoteIndex % 2 === 0) {
+                this.playTone(melodyNote * 2, this.introNextNoteTime + beatDuration * 0.4, beatDuration * 0.8, 'sine', 0.04);
+            }
+            // Pad - low sustained note for atmosphere
+            if (this.introNoteIndex % 4 === 0) {
+                this.playTone(bassNote / 2, this.introNextNoteTime, beatDuration * 4, 'sine', 0.04);
             }
 
             this.introNoteIndex++;
