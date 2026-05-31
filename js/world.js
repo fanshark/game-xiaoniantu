@@ -297,12 +297,12 @@ const ZONES = {
             for (let y = 0; y < this.height; y++) {
                 map[y] = [];
                 for (let x = 0; x < this.width; x++) {
-                    if (y === 0 && !(x >= 14 && x <= 16)) {
+                    if (y === 0 && x >= 21 && x <= 24) {
+                        map[y][x] = 'portal'; // North exit to desert
+                    } else if (y === 0) {
                         map[y][x] = 'wall';
-                    } else if (y === 0 && x >= 21 && x <= 24) {
-                        map[y][x] = 'portal';
                     } else if (x === this.width - 1 && y >= 14 && y <= 17) {
-                        map[y][x] = 'portal';
+                        map[y][x] = 'portal'; // East exit to mountain
                     } else if (y === this.height - 1 || x === 0 || x === this.width - 1) {
                         map[y][x] = 'wall';
                     } else {
