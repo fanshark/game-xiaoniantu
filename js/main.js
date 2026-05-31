@@ -8,6 +8,7 @@ const Game = {
     keys: {},
     moveTimer: 0,
     MOVE_DELAY: 0.08, // seconds between moves (fast)
+    combatGrace: 0, // invincibility after combat ends (seconds)
     camera: { x: 0, y: 0 },
     saveKey: 'xiaoniantu_save',
     
@@ -261,12 +262,16 @@ const Game = {
             }
         }
 
-        // Check for nearby enemies
+        // Check for nearby enemies (with grace period after combat)
         if (!Combat.active) {
-            const enemy = Combat.getEnemyNear(Player.tileX, Player.tileY, 1);
-            if (enemy) {
-                Combat.startCombat(enemy);
-                UI.showCombatHUD(enemy);
+            if (this.combatGrace > 0) {
+                this.combatGrace -= dt;
+            } else {
+                const enemy = Combat.getEnemyNear(Player.tileX, Player.tileY, 1);
+                if (enemy) {
+                    Combat.startCombat(enemy);
+                    UI.showCombatHUD(enemy);
+                }
             }
         }
 
@@ -541,6 +546,7 @@ const Game = {
             UI.hideCombatHUD();
             UI.showNotification(result.rewards.message);
             UI.updateHUD();
+            this.combatGrace = 1.5; // 1.5s grace period after killing enemy
 
             // Check boss defeat
             if (Player.bossDefeated) {

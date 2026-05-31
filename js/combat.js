@@ -10,8 +10,8 @@ const Combat = {
     enemyMoveTimer: 0,
     
     PLAYER_ATTACK_RATE: 0.4, // seconds between attacks
-    ENEMY_ATTACK_RATE: 1.2,
-    ENEMY_MOVE_RATE: 1.0, // seconds between enemy movements
+    ENEMY_ATTACK_RATE: 2.5, // seconds between enemy attacks (slower = fairer)
+    ENEMY_MOVE_RATE: 1.5, // seconds between enemy movements (slower chase)
 
     loadEnemies(zoneName) {
         const zone = ZONES[zoneName];
@@ -85,11 +85,15 @@ const Combat = {
             this.enemyAttackCooldown = this.ENEMY_ATTACK_RATE;
             const enemyX = this.currentEnemy.pixelX || (this.currentEnemy.x * TILE_SIZE + TILE_SIZE / 2);
             const enemyY = this.currentEnemy.pixelY || (this.currentEnemy.y * TILE_SIZE + TILE_SIZE / 2);
-            const dead = Player.takeDamage(this.currentEnemy.damage);
+            // Cap damage: max 8 per hit, never more than 10% of player maxHP
+            const rawDmg = this.currentEnemy.damage;
+            const maxDmg = Math.min(rawDmg, 8, Math.ceil(Player.maxHP * 0.1));
+            const finalDmg = Math.max(1, maxDmg);
+            const dead = Player.takeDamage(finalDmg);
             if (dead) {
-                return { type: 'player_dead', damage: this.currentEnemy.damage, enemyX, enemyY };
+                return { type: 'player_dead', damage: finalDmg, enemyX, enemyY };
             }
-            return { type: 'enemy_attack', damage: this.currentEnemy.damage, enemyX, enemyY };
+            return { type: 'enemy_attack', damage: finalDmg, enemyX, enemyY };
         }
         
         // Hit flash
@@ -113,8 +117,8 @@ const Combat = {
                 const distToPlayer = Math.abs(enemy.x - Player.tileX) + Math.abs(enemy.y - Player.tileY);
                 let dx = 0, dy = 0;
                 
-                if (distToPlayer <= 5) {
-                    // Chase player
+                if (distToPlayer <= 3) {
+                    // Chase player (reduced range from 5 to 3)
                     dx = Math.sign(Player.tileX - enemy.x);
                     dy = Math.sign(Player.tileY - enemy.y);
                     // Pick one direction
