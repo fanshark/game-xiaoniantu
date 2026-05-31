@@ -789,7 +789,7 @@ const World = {
         for (let i = 0; i < this.items.length; i++) {
             const dx = Math.abs(this.items[i].x - tileX);
             const dy = Math.abs(this.items[i].y - tileY);
-            if (dx <= 0 && dy <= 0) {
+            if (dx <= 1 && dy <= 1) {
                 return i;
             }
         }

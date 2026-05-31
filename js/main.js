@@ -312,14 +312,18 @@ const Game = {
             } else if (item.type === 'weapon') {
                 const weaponData = WEAPONS[item.weaponId];
                 if (weaponData) {
-                    const oldWeapon = Player.weapon;
-                    Player.equipWeapon({ ...weaponData, id: item.weaponId });
-                    Audio.playSFX('collect');
-                    let msg = `⚔️ 获得【${weaponData.name}】！攻击力+${weaponData.attackBonus}`;
-                    if (oldWeapon) {
-                        msg += ` (替换了${oldWeapon.name})`;
+                    const newWeapon = { ...weaponData, id: item.weaponId };
+                    // Add to inventory
+                    const alreadyHas = Player.weaponInventory.find(w => w.id === item.weaponId);
+                    if (!alreadyHas) {
+                        Player.weaponInventory.push(newWeapon);
                     }
-                    UI.showNotification(msg);
+                    // Auto-equip if better than current
+                    if (!Player.weapon || newWeapon.attackBonus > Player.weapon.attackBonus) {
+                        Player.equipWeapon(newWeapon);
+                    }
+                    Audio.playSFX('collect');
+                    UI.showNotification(`⚔️ 获得【${weaponData.name}】！攻击力+${weaponData.attackBonus}（按H管理装备）`);
                     UI.updateHUD();
                 }
             }

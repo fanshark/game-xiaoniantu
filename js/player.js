@@ -23,6 +23,7 @@ const Player = {
     attackPower: 5,
     weapon: null, // current equipped weapon
     weaponBonus: 0, // attack bonus from weapon
+    weaponInventory: [], // all collected weapons
     
     // Growth stage (0-4): tiny, small, medium, large, giant
     get stage() {
@@ -177,6 +178,7 @@ const Player = {
             currentZone: World.currentZone,
             weapon: this.weapon,
             weaponBonus: this.weaponBonus,
+            weaponInventory: this.weaponInventory,
         };
     },
 
@@ -198,6 +200,7 @@ const Player = {
         this.visitedZones = new Set(data.visitedZones || ['start']);
         this.weapon = data.weapon || null;
         this.weaponBonus = data.weaponBonus || 0;
+        this.weaponInventory = data.weaponInventory || [];
         this.pixelX = this.tileX * TILE_SIZE + TILE_SIZE / 2;
         this.pixelY = this.tileY * TILE_SIZE + TILE_SIZE / 2;
         this.targetX = this.pixelX;

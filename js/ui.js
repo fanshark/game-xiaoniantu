@@ -181,8 +181,26 @@ const UI = {
             }
         }
 
+        // Build weapon inventory HTML
+        let weaponHTML = '';
+        if (Player.weaponInventory.length === 0) {
+            weaponHTML = '<p style="color:#888;font-size:12px;text-align:center;">暂无武器，探索地图寻找武器吧！</p>';
+        } else {
+            Player.weaponInventory.forEach(w => {
+                const isEquipped = Player.weapon && Player.weapon.id === w.id;
+                const btnStyle = isEquipped 
+                    ? 'background:#ff69b4;color:#fff;border:none;padding:3px 10px;border-radius:4px;font-size:11px;cursor:default;'
+                    : 'background:#4CAF50;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;';
+                const btnText = isEquipped ? '✓ 装备中' : '装备';
+                weaponHTML += `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;margin:3px 0;background:rgba(255,215,0,0.1);border:1px solid ${w.color};border-radius:6px;">
+                    <span style="font-size:12px;"><span style="color:${w.color};font-weight:bold;">⚔️ ${w.name}</span> <span style="color:#aaa;">攻击+${w.attackBonus}</span> <span style="color:#888;font-size:10px;">${w.desc}</span></span>
+                    <button class="weapon-equip-btn" data-weapon-id="${w.id}" style="${btnStyle}">${btnText}</button>
+                </div>`;
+            });
+        }
+
         helpDiv.innerHTML = `
-            <div style="max-width:620px;max-height:90vh;overflow-y:auto;padding:25px;background:rgba(30,30,50,0.95);border:2px solid #ffb6c1;border-radius:12px;">
+            <div style="max-width:680px;max-height:90vh;overflow-y:auto;padding:25px;background:rgba(30,30,50,0.95);border:2px solid #ffb6c1;border-radius:12px;">
                 <h2 style="color:#ffb6c1;text-align:center;margin-bottom:12px;">📖 帮助 / Help</h2>
                 <div style="margin-bottom:12px;padding:8px;background:rgba(255,182,193,0.1);border-radius:8px;">
                     <p style="color:#ffd700;font-weight:bold;margin-bottom:4px;">🎯 当前进度提示：</p>
@@ -195,22 +213,38 @@ const UI = {
                             <tr><td style="color:#ffd700;">方向键/WASD</td><td>移动</td></tr>
                             <tr><td style="color:#ffd700;">E / Enter</td><td>对话/进入</td></tr>
                             <tr><td style="color:#ffd700;">空格 / Z</td><td>攻击</td></tr>
-                            <tr><td style="color:#ffd700;">H</td><td>帮助</td></tr>
+                            <tr><td style="color:#ffd700;">H</td><td>帮助/装备</td></tr>
                         </table>
                     </div>
                     <div style="flex:1;">
                         <h3 style="color:#ffb6c1;margin-bottom:6px;font-size:13px;">📊 状态：</h3>
                         <table style="width:100%;font-size:12px;line-height:1.8;">
                             <tr><td>体型：</td><td style="color:#ff69b4;">${Player.getSizeDisplay()}</td></tr>
+                            <tr><td>攻击力：</td><td style="color:#ff4444;">${Player.attackPower}</td></tr>
                             <tr><td>金币：</td><td style="color:#ffd700;">${Player.coins}</td></tr>
                             <tr><td>宠物：</td><td>${Player.hasPet ? '⭐' + Player.petPower : '❌'}</td></tr>
                             <tr><td>区域：</td><td>${ZONES[World.currentZone]?.name || ''}</td></tr>
                         </table>
                     </div>
                 </div>
+                <h3 style="color:#ffb6c1;margin:12px 0 6px;font-size:13px;">⚔️ 武器装备 (${Player.weaponInventory.length}件)：</h3>
+                <div style="max-height:120px;overflow-y:auto;border:1px solid rgba(255,215,0,0.3);border-radius:8px;padding:6px;">
+                    ${weaponHTML}
+                </div>
                 <h3 style="color:#ffb6c1;margin:12px 0 6px;font-size:13px;">💾 存档管理 (${Object.keys(slots).length}/10)：</h3>
-                <div id="save-slots-container" style="max-height:200px;overflow-y:auto;border:1px solid rgba(255,182,193,0.3);border-radius:8px;padding:6px;">
+                <div id="save-slots-container" style="max-height:160px;overflow-y:auto;border:1px solid rgba(255,182,193,0.3);border-radius:8px;padding:6px;">
                     ${slotsHTML}
+                </div>
+                <div style="margin-top:12px;padding:8px;background:rgba(100,200,100,0.1);border:1px solid rgba(100,200,100,0.3);border-radius:8px;">
+                    <h3 style="color:#8BC34A;margin-bottom:4px;font-size:12px;">📜 游戏规则：</h3>
+                    <ul style="font-size:11px;color:#ccc;line-height:1.8;padding-left:16px;">
+                        <li>🗡️ <b>武器</b>：地图上发光的武器，走到旁边触碰即可捡起</li>
+                        <li>⚔️ <b>装备</b>：按H打开此面板，选择要使用的武器</li>
+                        <li>🍄 <b>菌窟</b>：击败30只小菌可获得巨型粘土(+10米)</li>
+                        <li>🏠 <b>建筑</b>：走到门口按方向键进入，可回血/学技能</li>
+                        <li>🐾 <b>宠物</b>：海滩金色NPC可获得战斗伙伴</li>
+                        <li>🏜️ <b>沙漠</b>：每走一步体型-1mm，准备好再进入</li>
+                    </ul>
                 </div>
                 <div style="text-align:center;margin-top:12px;">
                     <button id="children-mode-btn" style="${childBtnStyle}padding:6px 16px;border-radius:20px;font-size:13px;cursor:pointer;font-weight:bold;">${childBtnText}</button>
@@ -223,6 +257,21 @@ const UI = {
         const btn = document.getElementById('children-mode-btn');
         if (btn) btn.onclick = () => Game.toggleChildrenMode();
         
+        // Weapon equip buttons
+        document.querySelectorAll('.weapon-equip-btn').forEach(b => {
+            b.onclick = () => {
+                const weaponId = b.dataset.weaponId;
+                const weapon = Player.weaponInventory.find(w => w.id === weaponId);
+                if (weapon) {
+                    Player.equipWeapon(weapon);
+                    UI.updateHUD();
+                    UI.showNotification(`⚔️ 已装备【${weapon.name}】！攻击力+${weapon.attackBonus}`);
+                    // Refresh the help overlay to update button states
+                    this.showHelp(progressHint, childrenMode);
+                }
+            };
+        });
+
         // Save slot buttons
         document.querySelectorAll('.slot-save-btn').forEach(b => {
             b.onclick = () => {
