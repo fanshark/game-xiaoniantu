@@ -48,10 +48,16 @@ gh api repos/{owner}/game-xiaoniantu/pages -X POST -f source.branch=main -f sour
 
 ---
 
-## 🔗 当前链接状态
+## 🔗 在线游戏链接
 
-> ⚠️ GitHub Token 已过期，暂无在线链接。
-> 请运行 `gh auth login` 后重新部署。
+### ✅ GitHub Pages（已部署）
+**https://fanshark.github.io/game-xiaoniantu/**
+
+> 把这个链接发给朋友，朋友打开就能直接玩！
+> （首次部署可能需要1-2分钟生效）
+
+### 📦 GitHub 仓库
+https://github.com/fanshark/game-xiaoniantu
 
 ---
 
