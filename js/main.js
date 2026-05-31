@@ -1090,9 +1090,9 @@ const Game = {
         
         const utterance = new SpeechSynthesisUtterance(readText);
         utterance.lang = 'zh-CN';
-        utterance.rate = 0.8;    // Natural speaking pace, not too fast
-        utterance.pitch = 1.2;   // Slightly higher, warm & gentle like 温柔桃子
-        utterance.volume = 0.85; // Soft and comfortable
+        utterance.rate = 1.5;    // Faster reading speed for children mode
+        utterance.pitch = 1.2;   // Slightly higher, warm & gentle
+        utterance.volume = 0.85;
         
         // Find the best Chinese female voice (closest to 温柔桃子 feel)
         const voices = window.speechSynthesis.getVoices();
