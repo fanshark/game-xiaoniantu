@@ -16,7 +16,7 @@ const Player = {
     direction: 'down', // up, down, left, right
     
     // Stats
-    sizeMM: 5, // starts at 5mm
+    sizeMM: 100, // starts at 100mm
     maxHP: 100,
     hp: 100,
     coins: 0,
