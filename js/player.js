@@ -21,6 +21,8 @@ const Player = {
     hp: 100,
     coins: 0,
     attackPower: 5,
+    weapon: null, // current equipped weapon
+    weaponBonus: 0, // attack bonus from weapon
     
     // Growth stage (0-4): tiny, small, medium, large, giant
     get stage() {
@@ -64,8 +66,8 @@ const Player = {
     // Growth
     grow(amount) {
         this.sizeMM = Math.max(1, this.sizeMM + amount);
-        // Update attack power based on size
-        this.attackPower = 5 + Math.floor(this.sizeMM / 100) * 2 + this.petPower;
+        // Update attack power based on size + weapon
+        this.attackPower = 5 + Math.floor(this.sizeMM / 100) * 2 + this.petPower + this.weaponBonus;
     },
 
     shrink(amount) {
@@ -85,6 +87,14 @@ const Player = {
 
     heal(amount) {
         this.hp = Math.min(this.maxHP, this.hp + amount);
+    },
+
+    // Equip weapon
+    equipWeapon(weaponData) {
+        this.weapon = weaponData;
+        this.weaponBonus = weaponData.attackBonus;
+        // Recalculate attack power
+        this.attackPower = 5 + Math.floor(this.sizeMM / 100) * 2 + this.petPower + this.weaponBonus;
     },
 
     // Movement
@@ -165,6 +175,8 @@ const Player = {
             friendRescued: this.friendRescued,
             visitedZones: [...this.visitedZones],
             currentZone: World.currentZone,
+            weapon: this.weapon,
+            weaponBonus: this.weaponBonus,
         };
     },
 
@@ -184,9 +196,13 @@ const Player = {
         this.bossDefeated = data.bossDefeated;
         this.friendRescued = data.friendRescued;
         this.visitedZones = new Set(data.visitedZones || ['start']);
+        this.weapon = data.weapon || null;
+        this.weaponBonus = data.weaponBonus || 0;
         this.pixelX = this.tileX * TILE_SIZE + TILE_SIZE / 2;
         this.pixelY = this.tileY * TILE_SIZE + TILE_SIZE / 2;
         this.targetX = this.pixelX;
         this.targetY = this.pixelY;
+        // Recalculate attack power
+        this.attackPower = 5 + Math.floor(this.sizeMM / 100) * 2 + this.petPower + this.weaponBonus;
     }
 };

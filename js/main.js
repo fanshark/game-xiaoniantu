@@ -20,8 +20,8 @@ const Game = {
         // Setup game canvas
         this.canvas = document.getElementById('game-canvas');
         this.ctx = this.canvas.getContext('2d');
-        this.canvas.width = 800;
-        this.canvas.height = 600;
+        this.canvas.width = 1200;
+        this.canvas.height = 900;
 
         // Setup audio
         Audio.init();
@@ -303,6 +303,19 @@ const Game = {
                 Player.coins += 5;
                 Audio.playSFX('coin');
                 UI.showNotification('+5 金币！');
+            } else if (item.type === 'weapon') {
+                const weaponData = WEAPONS[item.weaponId];
+                if (weaponData) {
+                    const oldWeapon = Player.weapon;
+                    Player.equipWeapon({ ...weaponData, id: item.weaponId });
+                    Audio.playSFX('collect');
+                    let msg = `⚔️ 获得【${weaponData.name}】！攻击力+${weaponData.attackBonus}`;
+                    if (oldWeapon) {
+                        msg += ` (替换了${oldWeapon.name})`;
+                    }
+                    UI.showNotification(msg);
+                    UI.updateHUD();
+                }
             }
         }
 
@@ -443,7 +456,7 @@ const Game = {
                     Player.fungiChallengeActive = true;
                     Combat.spawnFungiWave();
                     this.state = 'playing';
-                    UI.showNotification('🍄 菌窟挑战开始！击败100只小菌！');
+                    UI.showNotification('🍄 菌窟挑战开始！击败30只小菌！');
                     return;
                 }
 
@@ -533,7 +546,7 @@ const Game = {
             // Update fungi counter
             if (Player.fungiChallengeActive) {
                 UI.updateFungiCount();
-                if (Player.fungiDefeated >= 100) {
+                if (Player.fungiDefeated >= 30) {
                     UI.showNotification('🎉 恭喜！获得巨型粘土！+10米！');
                 }
             }
@@ -643,6 +656,8 @@ const Game = {
                 Assets.drawCoin(ctx, ix, iy, this.gameTime);
             } else if (item.type === 'giant_clay') {
                 Assets.drawGiantClay(ctx, ix, iy, this.gameTime);
+            } else if (item.type === 'weapon') {
+                this.drawWeaponItem(ctx, ix, iy, item.weaponId);
             }
         });
 
@@ -723,6 +738,96 @@ const Game = {
             ctx.fillRect(0, 0, w, h);
             ctx.globalAlpha = 1;
         }
+    },
+
+    // Draw weapon item on the map
+    drawWeaponItem(ctx, x, y, weaponId) {
+        const weapon = WEAPONS[weaponId];
+        if (!weapon) return;
+        const color = weapon.color;
+        const t = this.gameTime;
+        const bob = Math.sin(t * 3) * 2;
+        const glow = 0.4 + Math.sin(t * 4) * 0.2;
+
+        // Glow effect
+        ctx.save();
+        ctx.globalAlpha = glow;
+        ctx.beginPath();
+        ctx.arc(x, y + bob, 14, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.restore();
+
+        // Weapon shape based on type
+        ctx.save();
+        ctx.translate(x, y + bob);
+        ctx.rotate(Math.sin(t * 2) * 0.15);
+
+        if (weaponId === 'wooden_stick') {
+            // Stick
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(-2, -12, 4, 24);
+            ctx.fillStyle = '#A0522D';
+            ctx.fillRect(-3, -12, 6, 4);
+        } else if (weaponId === 'stone_hammer') {
+            // Hammer handle + head
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(-2, -4, 4, 18);
+            ctx.fillStyle = '#696969';
+            ctx.fillRect(-7, -10, 14, 8);
+            ctx.fillStyle = '#808080';
+            ctx.fillRect(-6, -9, 12, 6);
+        } else if (weaponId === 'iron_sword') {
+            // Sword blade + guard + handle
+            ctx.fillStyle = '#C0C0C0';
+            ctx.fillRect(-2, -14, 4, 18);
+            ctx.fillStyle = '#E8E8E8';
+            ctx.fillRect(-1, -14, 2, 16);
+            ctx.fillStyle = '#DAA520';
+            ctx.fillRect(-5, 4, 10, 3);
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(-2, 7, 4, 6);
+        } else if (weaponId === 'magic_staff') {
+            // Staff with orb
+            ctx.fillStyle = '#4B0082';
+            ctx.fillRect(-2, -4, 4, 20);
+            ctx.beginPath();
+            ctx.arc(0, -8, 6, 0, Math.PI * 2);
+            ctx.fillStyle = '#9B59B6';
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(-2, -10, 2, 0, Math.PI * 2);
+            ctx.fillStyle = '#E8DAEF';
+            ctx.fill();
+        } else if (weaponId === 'star_blade') {
+            // Golden star blade
+            ctx.fillStyle = '#FFD700';
+            ctx.fillRect(-2, -14, 4, 20);
+            ctx.fillStyle = '#FFF8DC';
+            ctx.fillRect(-1, -14, 2, 18);
+            // Star guard
+            ctx.beginPath();
+            ctx.moveTo(0, 4);
+            ctx.lineTo(-7, 8); ctx.lineTo(-3, 8);
+            ctx.lineTo(0, 12); ctx.lineTo(3, 8);
+            ctx.lineTo(7, 8); ctx.closePath();
+            ctx.fillStyle = '#FFD700';
+            ctx.fill();
+            // Tip glow
+            ctx.beginPath();
+            ctx.arc(0, -14, 3, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 215, 0, ${0.5 + Math.sin(t * 6) * 0.3})`;
+            ctx.fill();
+        }
+        ctx.restore();
+
+        // Weapon name label
+        ctx.font = 'bold 9px Microsoft YaHei';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#000';
+        ctx.fillText(weapon.name, x + 1, y + 18 + bob + 1);
+        ctx.fillStyle = color;
+        ctx.fillText(weapon.name, x, y + 18 + bob);
     },
 
     // === Visual Effects System ===
@@ -1054,9 +1159,9 @@ const Game = {
         } else if (size < 200) {
             hint = '💡 继续收集粘土成长，准备好再去沙漠。建议体型200mm以上再去南边沙漠。';
         } else if (zone !== 'fungus_cave' && !Player.fungiChallengeComplete && size < 5000) {
-            hint = '💡 穿过沙漠去菌窟！击败100只小菌可获得巨型粘土(+10米)。沙漠每步-1mm，做好准备！';
+            hint = '💡 穿过沙漠去菌窟！击败30只小菌可获得巨型粘土(+10米)。沙漠每步-1mm，做好准备！';
         } else if (Player.fungiChallengeActive) {
-            hint = `💡 菌窟挑战中！已击败 ${Player.fungiDefeated}/100 只小菌。继续战斗！`;
+            hint = `💡 菌窟挑战中！已击败 ${Player.fungiDefeated}/30 只小菌。继续战斗！`;
         } else if (Player.hasGiantClay && size < 15000) {
             hint = '💡 已获得巨型粘土！继续收集粘土达到15米，然后去山林挑战终极Boss！';
         } else if (size >= 15000 && !Player.bossDefeated) {

@@ -9,6 +9,8 @@ const UI = {
         document.getElementById('hp-display').textContent = `${Player.hp}/${Player.maxHP}`;
         document.getElementById('pet-display').textContent = Player.hasPet ? 
             `⭐ 战力 ${Player.petPower}` : '无';
+        document.getElementById('weapon-display').textContent = Player.weapon ? 
+            `⚔️ ${Player.weapon.name} (+${Player.weapon.attackBonus})` : '无';
         document.getElementById('zone-display').textContent = 
             ZONES[World.currentZone]?.name || '';
     },

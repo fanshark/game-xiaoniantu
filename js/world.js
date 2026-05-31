@@ -1,6 +1,15 @@
 // world.js - Map/zone definitions and tile system
 const TILE_SIZE = 32;
 
+// Weapon definitions
+const WEAPONS = {
+    wooden_stick: { name: '木棍', attackBonus: 3, color: '#8B4513', desc: '一根结实的木棍，初学者的好帮手' },
+    stone_hammer: { name: '石锤', attackBonus: 6, color: '#808080', desc: '沉重的石头锤子，威力不小' },
+    iron_sword: { name: '铁剑', attackBonus: 10, color: '#C0C0C0', desc: '锋利的铁剑，闪着寒光' },
+    magic_staff: { name: '魔法杖', attackBonus: 15, color: '#9B59B6', desc: '蕴含魔力的法杖，散发紫色光芒' },
+    star_blade: { name: '星辰之剑', attackBonus: 22, color: '#FFD700', desc: '传说中的神器，散发金色星光' },
+};
+
 const ZONES = {
     start: {
         name: '起始小路',
@@ -44,6 +53,7 @@ const ZONES = {
                 { type: 'clay', x: 27, y: 23 },
                 { type: 'coin', x: 15, y: 5 },
                 { type: 'coin', x: 30, y: 8 },
+                { type: 'weapon', weaponId: 'wooden_stick', x: 20, y: 14 },
             ];
         },
         spawnNPCs() {
@@ -121,6 +131,7 @@ const ZONES = {
                 { type: 'coin', x: 9, y: 12 }, { type: 'coin', x: 23, y: 23 },
                 { type: 'coin', x: 33, y: 15 }, { type: 'coin', x: 41, y: 29 },
                 { type: 'coin', x: 17, y: 32 },
+                { type: 'weapon', weaponId: 'stone_hammer', x: 38, y: 11 },
             ];
         },
         spawnNPCs() {
@@ -190,6 +201,7 @@ const ZONES = {
                 { type: 'clay', x: 11, y: 9 }, { type: 'clay', x: 21, y: 18 },
                 { type: 'clay', x: 29, y: 6 }, { type: 'clay', x: 17, y: 23 },
                 { type: 'clay', x: 24, y: 14 },
+                { type: 'weapon', weaponId: 'iron_sword', x: 33, y: 20 },
             ];
         },
         spawnNPCs() {
@@ -252,6 +264,7 @@ const ZONES = {
             return [
                 { type: 'clay', x: 30, y: 23 },
                 { type: 'coin', x: 8, y: 18 },
+                { type: 'weapon', weaponId: 'magic_staff', x: 20, y: 12 },
             ];
         },
         spawnNPCs() {
@@ -353,6 +366,7 @@ const ZONES = {
             return [
                 { type: 'clay', x: 8, y: 8 },
                 { type: 'clay', x: 8, y: 23 },
+                { type: 'weapon', weaponId: 'star_blade', x: 28, y: 23 },
             ];
         },
         spawnNPCs() {

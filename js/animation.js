@@ -27,8 +27,8 @@ const Animation = {
     init() {
         this.canvas = document.getElementById('intro-canvas');
         this.ctx = this.canvas.getContext('2d');
-        this.canvas.width = 800;
-        this.canvas.height = 600;
+        this.canvas.width = 1200;
+        this.canvas.height = 900;
         this.phase = 0;
         this.timer = 0;
         this.complete = false;

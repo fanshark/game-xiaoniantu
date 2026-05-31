@@ -155,11 +155,11 @@ const Combat = {
                 rewards.coins = 2;
                 rewards.clay = 1;
                 Player.fungiDefeated++;
-                rewards.message = `击败小菌！(${Player.fungiDefeated}/100) +${rewards.coins}金币`;
+                rewards.message = `击败小菌！(${Player.fungiDefeated}/30) +${rewards.coins}金币`;
                 
-                if (Player.fungiDefeated >= 100 && !Player.hasGiantClay) {
+                if (Player.fungiDefeated >= 30 && !Player.hasGiantClay) {
                     rewards.giantClay = true;
-                    rewards.message = '🎉 击败100只小菌！获得【巨型粘土】！体型 +10米！！！';
+                    rewards.message = '🎉 击败30只小菌！获得【巨型粘土】！体型 +10米！！！';
                     Player.hasGiantClay = true;
                     Player.grow(10000);
                     Player.fungiChallengeActive = false;
@@ -179,16 +179,16 @@ const Combat = {
     },
 
     spawnFungiWave() {
-        if (Player.fungiDefeated >= 100) return;
+        if (Player.fungiDefeated >= 30) return;
         
-        const remaining = 100 - Player.fungiDefeated;
+        const remaining = 30 - Player.fungiDefeated;
         const waveSize = Math.min(5, remaining);
         
         for (let i = 0; i < waveSize; i++) {
             const x = 4 + Math.floor(Math.random() * 17);
             const y = 3 + Math.floor(Math.random() * 14);
             // Level scales with progress: 1-2 early, 2-3 late
-            const level = Math.min(3, 1 + Math.floor(Player.fungiDefeated / 40));
+            const level = Math.min(3, 1 + Math.floor(Player.fungiDefeated / 12));
             this.enemies.push({
                 type: 'fungi',
                 x: x,
@@ -210,7 +210,7 @@ const Combat = {
 
     needsNewWave() {
         if (!Player.fungiChallengeActive) return false;
-        if (Player.fungiDefeated >= 100) return false;
+        if (Player.fungiDefeated >= 30) return false;
         const aliveFungi = this.enemies.filter(e => e.type === 'fungi' && e.alive);
         return aliveFungi.length === 0;
     }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小黏土走走走 - Little Clay Go Go Go</title>
+    <title>小黏土走走走 - RPG冒险</title>
     <style>
 * {
     margin: 0;
@@ -23,8 +23,8 @@ body {
 
 #game-container {
     position: relative;
-    width: 800px;
-    height: 600px;
+    width: 1200px;
+    height: 900px;
     border: 3px solid #ffb6c1;
     border-radius: 12px;
     overflow: hidden;
@@ -440,8 +440,7 @@ canvas {
     color: rgba(255, 255, 255, 0.5);
     font-size: 11px;
 }
-
-</style>
+    </style>
 </head>
 <body>
     <!-- 游戏容器 -->
@@ -461,6 +460,7 @@ canvas {
                 <div id="hud-coins"><span class="hud-label">金币:</span> <span id="coins-display">0</span></div>
                 <div id="hud-hp"><span class="hud-label">HP:</span> <span id="hp-display">100/100</span></div>
                 <div id="hud-pet"><span class="hud-label">宠物:</span> <span id="pet-display">无</span></div>
+                <div id="hud-weapon"><span class="hud-label">武器:</span> <span id="weapon-display">无</span></div>
                 <div id="hud-zone"><span class="hud-label">区域:</span> <span id="zone-display">起始小路</span></div>
             </div>
             <!-- 小地图 -->
@@ -514,7 +514,9 @@ canvas {
         </div>
     </div>
 
-                                        <script>
+</body>
+<script>
+// === assets.js ===
 // assets.js - Programmatic sprite/asset generation
 const Assets = {
     // Color palette
@@ -672,9 +674,7 @@ const Assets = {
         ctx.font = '7px bold sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        if (spin > 0.3) ctx.fillText('
-</html>
-, 0, 0);
+        if (spin > 0.3) ctx.fillText('$', 0, 0);
         
         ctx.restore();
     },
@@ -1026,7 +1026,7 @@ const Assets = {
     }
 };
 
-
+// === audio.js ===
 // audio.js - Procedural game music and sound effects using Web Audio API
 const Audio = {
     ctx: null,
@@ -1217,9 +1217,18 @@ const Audio = {
     }
 };
 
-
+// === world.js ===
 // world.js - Map/zone definitions and tile system
 const TILE_SIZE = 32;
+
+// Weapon definitions
+const WEAPONS = {
+    wooden_stick: { name: '木棍', attackBonus: 3, color: '#8B4513', desc: '一根结实的木棍，初学者的好帮手' },
+    stone_hammer: { name: '石锤', attackBonus: 6, color: '#808080', desc: '沉重的石头锤子，威力不小' },
+    iron_sword: { name: '铁剑', attackBonus: 10, color: '#C0C0C0', desc: '锋利的铁剑，闪着寒光' },
+    magic_staff: { name: '魔法杖', attackBonus: 15, color: '#9B59B6', desc: '蕴含魔力的法杖，散发紫色光芒' },
+    star_blade: { name: '星辰之剑', attackBonus: 22, color: '#FFD700', desc: '传说中的神器，散发金色星光' },
+};
 
 const ZONES = {
     start: {
@@ -1264,6 +1273,7 @@ const ZONES = {
                 { type: 'clay', x: 27, y: 23 },
                 { type: 'coin', x: 15, y: 5 },
                 { type: 'coin', x: 30, y: 8 },
+                { type: 'weapon', weaponId: 'wooden_stick', x: 20, y: 14 },
             ];
         },
         spawnNPCs() {
@@ -1341,6 +1351,7 @@ const ZONES = {
                 { type: 'coin', x: 9, y: 12 }, { type: 'coin', x: 23, y: 23 },
                 { type: 'coin', x: 33, y: 15 }, { type: 'coin', x: 41, y: 29 },
                 { type: 'coin', x: 17, y: 32 },
+                { type: 'weapon', weaponId: 'stone_hammer', x: 38, y: 11 },
             ];
         },
         spawnNPCs() {
@@ -1410,6 +1421,7 @@ const ZONES = {
                 { type: 'clay', x: 11, y: 9 }, { type: 'clay', x: 21, y: 18 },
                 { type: 'clay', x: 29, y: 6 }, { type: 'clay', x: 17, y: 23 },
                 { type: 'clay', x: 24, y: 14 },
+                { type: 'weapon', weaponId: 'iron_sword', x: 33, y: 20 },
             ];
         },
         spawnNPCs() {
@@ -1472,6 +1484,7 @@ const ZONES = {
             return [
                 { type: 'clay', x: 30, y: 23 },
                 { type: 'coin', x: 8, y: 18 },
+                { type: 'weapon', weaponId: 'magic_staff', x: 20, y: 12 },
             ];
         },
         spawnNPCs() {
@@ -1573,6 +1586,7 @@ const ZONES = {
             return [
                 { type: 'clay', x: 8, y: 8 },
                 { type: 'clay', x: 8, y: 23 },
+                { type: 'weapon', weaponId: 'star_blade', x: 28, y: 23 },
             ];
         },
         spawnNPCs() {
@@ -2003,7 +2017,7 @@ const World = {
     }
 };
 
-
+// === player.js ===
 // player.js - Player state, movement, and growth
 const Player = {
     // Position (in tile coordinates)
@@ -2027,6 +2041,8 @@ const Player = {
     hp: 100,
     coins: 0,
     attackPower: 5,
+    weapon: null, // current equipped weapon
+    weaponBonus: 0, // attack bonus from weapon
     
     // Growth stage (0-4): tiny, small, medium, large, giant
     get stage() {
@@ -2070,8 +2086,8 @@ const Player = {
     // Growth
     grow(amount) {
         this.sizeMM = Math.max(1, this.sizeMM + amount);
-        // Update attack power based on size
-        this.attackPower = 5 + Math.floor(this.sizeMM / 100) * 2 + this.petPower;
+        // Update attack power based on size + weapon
+        this.attackPower = 5 + Math.floor(this.sizeMM / 100) * 2 + this.petPower + this.weaponBonus;
     },
 
     shrink(amount) {
@@ -2091,6 +2107,14 @@ const Player = {
 
     heal(amount) {
         this.hp = Math.min(this.maxHP, this.hp + amount);
+    },
+
+    // Equip weapon
+    equipWeapon(weaponData) {
+        this.weapon = weaponData;
+        this.weaponBonus = weaponData.attackBonus;
+        // Recalculate attack power
+        this.attackPower = 5 + Math.floor(this.sizeMM / 100) * 2 + this.petPower + this.weaponBonus;
     },
 
     // Movement
@@ -2171,6 +2195,8 @@ const Player = {
             friendRescued: this.friendRescued,
             visitedZones: [...this.visitedZones],
             currentZone: World.currentZone,
+            weapon: this.weapon,
+            weaponBonus: this.weaponBonus,
         };
     },
 
@@ -2190,14 +2216,18 @@ const Player = {
         this.bossDefeated = data.bossDefeated;
         this.friendRescued = data.friendRescued;
         this.visitedZones = new Set(data.visitedZones || ['start']);
+        this.weapon = data.weapon || null;
+        this.weaponBonus = data.weaponBonus || 0;
         this.pixelX = this.tileX * TILE_SIZE + TILE_SIZE / 2;
         this.pixelY = this.tileY * TILE_SIZE + TILE_SIZE / 2;
         this.targetX = this.pixelX;
         this.targetY = this.pixelY;
+        // Recalculate attack power
+        this.attackPower = 5 + Math.floor(this.sizeMM / 100) * 2 + this.petPower + this.weaponBonus;
     }
 };
 
-
+// === npc.js ===
 // npc.js - NPC system with dialogue trees
 const NPCSystem = {
     npcs: [],
@@ -2674,7 +2704,7 @@ const NPCSystem = {
     }
 };
 
-
+// === combat.js ===
 // combat.js - Combat system with enemy AI movement
 const Combat = {
     active: false,
@@ -2832,11 +2862,11 @@ const Combat = {
                 rewards.coins = 2;
                 rewards.clay = 1;
                 Player.fungiDefeated++;
-                rewards.message = `击败小菌！(${Player.fungiDefeated}/100) +${rewards.coins}金币`;
+                rewards.message = `击败小菌！(${Player.fungiDefeated}/30) +${rewards.coins}金币`;
                 
-                if (Player.fungiDefeated >= 100 && !Player.hasGiantClay) {
+                if (Player.fungiDefeated >= 30 && !Player.hasGiantClay) {
                     rewards.giantClay = true;
-                    rewards.message = '🎉 击败100只小菌！获得【巨型粘土】！体型 +10米！！！';
+                    rewards.message = '🎉 击败30只小菌！获得【巨型粘土】！体型 +10米！！！';
                     Player.hasGiantClay = true;
                     Player.grow(10000);
                     Player.fungiChallengeActive = false;
@@ -2856,16 +2886,16 @@ const Combat = {
     },
 
     spawnFungiWave() {
-        if (Player.fungiDefeated >= 100) return;
+        if (Player.fungiDefeated >= 30) return;
         
-        const remaining = 100 - Player.fungiDefeated;
+        const remaining = 30 - Player.fungiDefeated;
         const waveSize = Math.min(5, remaining);
         
         for (let i = 0; i < waveSize; i++) {
             const x = 4 + Math.floor(Math.random() * 17);
             const y = 3 + Math.floor(Math.random() * 14);
             // Level scales with progress: 1-2 early, 2-3 late
-            const level = Math.min(3, 1 + Math.floor(Player.fungiDefeated / 40));
+            const level = Math.min(3, 1 + Math.floor(Player.fungiDefeated / 12));
             this.enemies.push({
                 type: 'fungi',
                 x: x,
@@ -2887,13 +2917,13 @@ const Combat = {
 
     needsNewWave() {
         if (!Player.fungiChallengeActive) return false;
-        if (Player.fungiDefeated >= 100) return false;
+        if (Player.fungiDefeated >= 30) return false;
         const aliveFungi = this.enemies.filter(e => e.type === 'fungi' && e.alive);
         return aliveFungi.length === 0;
     }
 };
 
-
+// === shop.js ===
 // shop.js - Real and fake shop systems
 const Shop = {
     isOpen: false,
@@ -3012,7 +3042,7 @@ const Shop = {
     }
 };
 
-
+// === ui.js ===
 // ui.js - UI management, HUD, dialogue, notifications
 const UI = {
     notifications: [],
@@ -3024,6 +3054,8 @@ const UI = {
         document.getElementById('hp-display').textContent = `${Player.hp}/${Player.maxHP}`;
         document.getElementById('pet-display').textContent = Player.hasPet ? 
             `⭐ 战力 ${Player.petPower}` : '无';
+        document.getElementById('weapon-display').textContent = Player.weapon ? 
+            `⚔️ ${Player.weapon.name} (+${Player.weapon.attackBonus})` : '无';
         document.getElementById('zone-display').textContent = 
             ZONES[World.currentZone]?.name || '';
     },
@@ -3350,7 +3382,7 @@ const UI = {
     }
 };
 
-
+// === animation.js ===
 // animation.js - Opening cutscene animation
 const Animation = {
     canvas: null,
@@ -3380,8 +3412,8 @@ const Animation = {
     init() {
         this.canvas = document.getElementById('intro-canvas');
         this.ctx = this.canvas.getContext('2d');
-        this.canvas.width = 800;
-        this.canvas.height = 600;
+        this.canvas.width = 1200;
+        this.canvas.height = 900;
         this.phase = 0;
         this.timer = 0;
         this.complete = false;
@@ -3693,7 +3725,7 @@ const Animation = {
     }
 };
 
-
+// === main.js ===
 // main.js - Main game loop and state management
 const Game = {
     state: 'intro', // intro, playing, dialogue, shop, combat, gameover
@@ -3716,8 +3748,8 @@ const Game = {
         // Setup game canvas
         this.canvas = document.getElementById('game-canvas');
         this.ctx = this.canvas.getContext('2d');
-        this.canvas.width = 800;
-        this.canvas.height = 600;
+        this.canvas.width = 1200;
+        this.canvas.height = 900;
 
         // Setup audio
         Audio.init();
@@ -3999,6 +4031,19 @@ const Game = {
                 Player.coins += 5;
                 Audio.playSFX('coin');
                 UI.showNotification('+5 金币！');
+            } else if (item.type === 'weapon') {
+                const weaponData = WEAPONS[item.weaponId];
+                if (weaponData) {
+                    const oldWeapon = Player.weapon;
+                    Player.equipWeapon({ ...weaponData, id: item.weaponId });
+                    Audio.playSFX('collect');
+                    let msg = `⚔️ 获得【${weaponData.name}】！攻击力+${weaponData.attackBonus}`;
+                    if (oldWeapon) {
+                        msg += ` (替换了${oldWeapon.name})`;
+                    }
+                    UI.showNotification(msg);
+                    UI.updateHUD();
+                }
             }
         }
 
@@ -4139,7 +4184,7 @@ const Game = {
                     Player.fungiChallengeActive = true;
                     Combat.spawnFungiWave();
                     this.state = 'playing';
-                    UI.showNotification('🍄 菌窟挑战开始！击败100只小菌！');
+                    UI.showNotification('🍄 菌窟挑战开始！击败30只小菌！');
                     return;
                 }
 
@@ -4229,7 +4274,7 @@ const Game = {
             // Update fungi counter
             if (Player.fungiChallengeActive) {
                 UI.updateFungiCount();
-                if (Player.fungiDefeated >= 100) {
+                if (Player.fungiDefeated >= 30) {
                     UI.showNotification('🎉 恭喜！获得巨型粘土！+10米！');
                 }
             }
@@ -4339,6 +4384,8 @@ const Game = {
                 Assets.drawCoin(ctx, ix, iy, this.gameTime);
             } else if (item.type === 'giant_clay') {
                 Assets.drawGiantClay(ctx, ix, iy, this.gameTime);
+            } else if (item.type === 'weapon') {
+                this.drawWeaponItem(ctx, ix, iy, item.weaponId);
             }
         });
 
@@ -4419,6 +4466,96 @@ const Game = {
             ctx.fillRect(0, 0, w, h);
             ctx.globalAlpha = 1;
         }
+    },
+
+    // Draw weapon item on the map
+    drawWeaponItem(ctx, x, y, weaponId) {
+        const weapon = WEAPONS[weaponId];
+        if (!weapon) return;
+        const color = weapon.color;
+        const t = this.gameTime;
+        const bob = Math.sin(t * 3) * 2;
+        const glow = 0.4 + Math.sin(t * 4) * 0.2;
+
+        // Glow effect
+        ctx.save();
+        ctx.globalAlpha = glow;
+        ctx.beginPath();
+        ctx.arc(x, y + bob, 14, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.restore();
+
+        // Weapon shape based on type
+        ctx.save();
+        ctx.translate(x, y + bob);
+        ctx.rotate(Math.sin(t * 2) * 0.15);
+
+        if (weaponId === 'wooden_stick') {
+            // Stick
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(-2, -12, 4, 24);
+            ctx.fillStyle = '#A0522D';
+            ctx.fillRect(-3, -12, 6, 4);
+        } else if (weaponId === 'stone_hammer') {
+            // Hammer handle + head
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(-2, -4, 4, 18);
+            ctx.fillStyle = '#696969';
+            ctx.fillRect(-7, -10, 14, 8);
+            ctx.fillStyle = '#808080';
+            ctx.fillRect(-6, -9, 12, 6);
+        } else if (weaponId === 'iron_sword') {
+            // Sword blade + guard + handle
+            ctx.fillStyle = '#C0C0C0';
+            ctx.fillRect(-2, -14, 4, 18);
+            ctx.fillStyle = '#E8E8E8';
+            ctx.fillRect(-1, -14, 2, 16);
+            ctx.fillStyle = '#DAA520';
+            ctx.fillRect(-5, 4, 10, 3);
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(-2, 7, 4, 6);
+        } else if (weaponId === 'magic_staff') {
+            // Staff with orb
+            ctx.fillStyle = '#4B0082';
+            ctx.fillRect(-2, -4, 4, 20);
+            ctx.beginPath();
+            ctx.arc(0, -8, 6, 0, Math.PI * 2);
+            ctx.fillStyle = '#9B59B6';
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(-2, -10, 2, 0, Math.PI * 2);
+            ctx.fillStyle = '#E8DAEF';
+            ctx.fill();
+        } else if (weaponId === 'star_blade') {
+            // Golden star blade
+            ctx.fillStyle = '#FFD700';
+            ctx.fillRect(-2, -14, 4, 20);
+            ctx.fillStyle = '#FFF8DC';
+            ctx.fillRect(-1, -14, 2, 18);
+            // Star guard
+            ctx.beginPath();
+            ctx.moveTo(0, 4);
+            ctx.lineTo(-7, 8); ctx.lineTo(-3, 8);
+            ctx.lineTo(0, 12); ctx.lineTo(3, 8);
+            ctx.lineTo(7, 8); ctx.closePath();
+            ctx.fillStyle = '#FFD700';
+            ctx.fill();
+            // Tip glow
+            ctx.beginPath();
+            ctx.arc(0, -14, 3, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 215, 0, ${0.5 + Math.sin(t * 6) * 0.3})`;
+            ctx.fill();
+        }
+        ctx.restore();
+
+        // Weapon name label
+        ctx.font = 'bold 9px Microsoft YaHei';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#000';
+        ctx.fillText(weapon.name, x + 1, y + 18 + bob + 1);
+        ctx.fillStyle = color;
+        ctx.fillText(weapon.name, x, y + 18 + bob);
     },
 
     // === Visual Effects System ===
@@ -4750,9 +4887,9 @@ const Game = {
         } else if (size < 200) {
             hint = '💡 继续收集粘土成长，准备好再去沙漠。建议体型200mm以上再去南边沙漠。';
         } else if (zone !== 'fungus_cave' && !Player.fungiChallengeComplete && size < 5000) {
-            hint = '💡 穿过沙漠去菌窟！击败100只小菌可获得巨型粘土(+10米)。沙漠每步-1mm，做好准备！';
+            hint = '💡 穿过沙漠去菌窟！击败30只小菌可获得巨型粘土(+10米)。沙漠每步-1mm，做好准备！';
         } else if (Player.fungiChallengeActive) {
-            hint = `💡 菌窟挑战中！已击败 ${Player.fungiDefeated}/100 只小菌。继续战斗！`;
+            hint = `💡 菌窟挑战中！已击败 ${Player.fungiDefeated}/30 只小菌。继续战斗！`;
         } else if (Player.hasGiantClay && size < 15000) {
             hint = '💡 已获得巨型粘土！继续收集粘土达到15米，然后去山林挑战终极Boss！';
         } else if (size >= 15000 && !Player.bossDefeated) {
@@ -4773,5 +4910,4 @@ window.addEventListener('load', () => {
 });
 
 </script>
-</body>
-</html>
+</body></html>
