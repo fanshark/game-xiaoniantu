@@ -7,14 +7,14 @@ const Animation = {
     complete: false,
     skipped: false,
 
-    // Animation phases
+    // Animation phases (slowed to half speed)
     phases: [
-        { duration: 3, name: 'spin' },        // Pink clay spinning
-        { duration: 4, name: 'story1' },       // Intro story
-        { duration: 4, name: 'story2' },       // Friend kidnapped
-        { duration: 4, name: 'story3' },       // Determination
-        { duration: 3, name: 'preview' },      // Adventure preview
-        { duration: 2, name: 'title' },        // Title display
+        { duration: 6, name: 'spin' },        // Pink clay spinning
+        { duration: 8, name: 'story1' },       // Intro story
+        { duration: 8, name: 'story2' },       // Friend kidnapped
+        { duration: 8, name: 'story3' },       // Determination
+        { duration: 6, name: 'preview' },      // Adventure preview
+        { duration: 4, name: 'title' },        // Title display
     ],
 
     storyTexts: [

@@ -34,6 +34,9 @@ const Game = {
 
         // Setup intro
         Animation.init();
+        // Start intro music
+        Audio.resume();
+        Audio.startIntroMusic();
 
         // Setup input
         this.setupInput();
@@ -164,6 +167,9 @@ const Game = {
     },
 
     startGame() {
+        // Stop intro music, start game music
+        Audio.stopIntroMusic();
+
         // Hide intro, show game
         document.getElementById('intro-screen').classList.remove('active');
         document.getElementById('game-screen').classList.add('active');

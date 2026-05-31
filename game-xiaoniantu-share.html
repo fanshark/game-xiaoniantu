@@ -1086,6 +1086,63 @@ const Audio = {
         this.musicPlaying = false;
     },
 
+    // Intro cutscene music - gentle, dreamy lullaby
+    introMusicPlaying: false,
+    introNoteIndex: 0,
+    introNextNoteTime: 0,
+
+    introMelody: [
+        392.00, 440.00, 523.25, 587.33, 523.25, 440.00, // G4 A4 C5 D5 C5 A4
+        392.00, 349.23, 329.63, 349.23, 392.00, 440.00, // G4 F4 E4 F4 G4 A4
+        523.25, 587.33, 659.25, 587.33, 523.25, 440.00, // C5 D5 E5 D5 C5 A4
+        392.00, 440.00, 523.25, 392.00, 349.23, 329.63, // G4 A4 C5 G4 F4 E4
+    ],
+    introBass: [
+        196.00, 196.00, 220.00, 220.00, 261.63, 261.63, // G3 G3 A3 A3 C4 C4
+        174.61, 174.61, 164.81, 164.81, 196.00, 196.00, // F3 F3 E3 E3 G3 G3
+        261.63, 261.63, 293.66, 293.66, 261.63, 261.63, // C4 C4 D4 D4 C4 C4
+        196.00, 196.00, 174.61, 174.61, 164.81, 164.81, // G3 G3 F3 F3 E3 E3
+    ],
+
+    startIntroMusic() {
+        if (!this.ctx || this.introMusicPlaying) return;
+        this.introMusicPlaying = true;
+        this.introNoteIndex = 0;
+        this.introNextNoteTime = this.ctx.currentTime;
+        this.scheduleIntroMusic();
+    },
+
+    stopIntroMusic() {
+        this.introMusicPlaying = false;
+    },
+
+    scheduleIntroMusic() {
+        if (!this.introMusicPlaying || !this.ctx) return;
+
+        const beatDuration = 60 / 72; // Slow tempo (72 BPM)
+
+        while (this.introNextNoteTime < this.ctx.currentTime + 0.5) {
+            const melodyNote = this.introMelody[this.introNoteIndex % this.introMelody.length];
+            const bassNote = this.introBass[this.introNoteIndex % this.introBass.length];
+
+            // Melody - sine wave (soft, dreamlike)
+            this.playTone(melodyNote, this.introNextNoteTime, beatDuration * 1.2, 'sine', 0.1);
+            // Bass - triangle wave (warm)
+            this.playTone(bassNote, this.introNextNoteTime, beatDuration * 1.5, 'triangle', 0.06);
+            // Shimmer - high octave sine (twinkle)
+            if (this.introNoteIndex % 3 === 0) {
+                this.playTone(melodyNote * 2, this.introNextNoteTime + beatDuration * 0.3, beatDuration * 0.6, 'sine', 0.03);
+            }
+
+            this.introNoteIndex++;
+            this.introNextNoteTime += beatDuration;
+        }
+
+        if (this.introMusicPlaying) {
+            setTimeout(() => this.scheduleIntroMusic(), 200);
+        }
+    },
+
     scheduleMusic() {
         if (!this.musicPlaying || !this.ctx) return;
 
@@ -3392,14 +3449,14 @@ const Animation = {
     complete: false,
     skipped: false,
 
-    // Animation phases
+    // Animation phases (slowed to half speed)
     phases: [
-        { duration: 3, name: 'spin' },        // Pink clay spinning
-        { duration: 4, name: 'story1' },       // Intro story
-        { duration: 4, name: 'story2' },       // Friend kidnapped
-        { duration: 4, name: 'story3' },       // Determination
-        { duration: 3, name: 'preview' },      // Adventure preview
-        { duration: 2, name: 'title' },        // Title display
+        { duration: 6, name: 'spin' },        // Pink clay spinning
+        { duration: 8, name: 'story1' },       // Intro story
+        { duration: 8, name: 'story2' },       // Friend kidnapped
+        { duration: 8, name: 'story3' },       // Determination
+        { duration: 6, name: 'preview' },      // Adventure preview
+        { duration: 4, name: 'title' },        // Title display
     ],
 
     storyTexts: [
@@ -3762,6 +3819,9 @@ const Game = {
 
         // Setup intro
         Animation.init();
+        // Start intro music
+        Audio.resume();
+        Audio.startIntroMusic();
 
         // Setup input
         this.setupInput();
@@ -3892,6 +3952,9 @@ const Game = {
     },
 
     startGame() {
+        // Stop intro music, start game music
+        Audio.stopIntroMusic();
+
         // Hide intro, show game
         document.getElementById('intro-screen').classList.remove('active');
         document.getElementById('game-screen').classList.add('active');
