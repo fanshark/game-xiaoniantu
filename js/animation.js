@@ -228,6 +228,14 @@ const Animation = {
             ctx.font = '18px Microsoft YaHei';
             ctx.fillText('一段充满勇气的冒险故事...', w/2, h/2 + 170);
         }
+
+        // Prompt to click for music (blinks)
+        if (typeof Game !== 'undefined' && !Game.introMusicStarted) {
+            const blink = Math.sin(this.timer * 5) * 0.3 + 0.7;
+            ctx.fillStyle = `rgba(255, 255, 200, ${blink})`;
+            ctx.font = '20px Microsoft YaHei';
+            ctx.fillText('🔊 点击屏幕或按任意键开启音乐', w/2, h - 40);
+        }
     },
 
     renderStory(ctx, w, h, storyIndex, progress) {

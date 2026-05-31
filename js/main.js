@@ -35,9 +35,8 @@ const Game = {
 
         // Setup intro
         Animation.init();
-        // Start intro music
-        Audio.resume();
-        Audio.startIntroMusic();
+        // Intro music will start on first user interaction (required by browser policy)
+        this.introMusicStarted = false;
 
         // Setup input
         this.setupInput();
@@ -45,9 +44,19 @@ const Game = {
 
         // Setup buttons
         document.getElementById('skip-intro').onclick = () => {
+            Audio.resume();
             Animation.skip();
             this.startGame();
         };
+
+        // Start intro music on any click during intro
+        document.addEventListener('click', () => {
+            if (!this.introMusicStarted && this.state === 'intro') {
+                Audio.resume();
+                this.introMusicStarted = true;
+                Audio.startIntroMusic();
+            }
+        }, { once: false });
 
         document.getElementById('shop-close').onclick = () => {
             Shop.closeShop();
@@ -75,9 +84,13 @@ const Game = {
                 this.startGame();
             }
 
-            // Resume audio on first interaction
+            // Resume audio on first interaction + start intro music
             if (typeof Audio !== 'undefined' && Audio.ctx) {
                 Audio.resume();
+                if (!this.introMusicStarted && this.state === 'intro') {
+                    this.introMusicStarted = true;
+                    Audio.startIntroMusic();
+                }
                 if (!Audio.musicPlaying && this.state === 'playing') {
                     Audio.startMusic();
                 }

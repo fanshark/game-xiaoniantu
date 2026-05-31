@@ -3726,6 +3726,14 @@ const Animation = {
             ctx.font = '18px Microsoft YaHei';
             ctx.fillText('一段充满勇气的冒险故事...', w/2, h/2 + 170);
         }
+
+        // Prompt to click for music (blinks)
+        if (typeof Game !== 'undefined' && !Game.introMusicStarted) {
+            const blink = Math.sin(this.timer * 5) * 0.3 + 0.7;
+            ctx.fillStyle = `rgba(255, 255, 200, ${blink})`;
+            ctx.font = '20px Microsoft YaHei';
+            ctx.fillText('🔊 点击屏幕或按任意键开启音乐', w/2, h - 40);
+        }
     },
 
     renderStory(ctx, w, h, storyIndex, progress) {
@@ -4177,9 +4185,8 @@ const Game = {
 
         // Setup intro
         Animation.init();
-        // Start intro music
-        Audio.resume();
-        Audio.startIntroMusic();
+        // Intro music will start on first user interaction (required by browser policy)
+        this.introMusicStarted = false;
 
         // Setup input
         this.setupInput();
@@ -4187,9 +4194,19 @@ const Game = {
 
         // Setup buttons
         document.getElementById('skip-intro').onclick = () => {
+            Audio.resume();
             Animation.skip();
             this.startGame();
         };
+
+        // Start intro music on any click during intro
+        document.addEventListener('click', () => {
+            if (!this.introMusicStarted && this.state === 'intro') {
+                Audio.resume();
+                this.introMusicStarted = true;
+                Audio.startIntroMusic();
+            }
+        }, { once: false });
 
         document.getElementById('shop-close').onclick = () => {
             Shop.closeShop();
@@ -4217,9 +4234,13 @@ const Game = {
                 this.startGame();
             }
 
-            // Resume audio on first interaction
+            // Resume audio on first interaction + start intro music
             if (typeof Audio !== 'undefined' && Audio.ctx) {
                 Audio.resume();
+                if (!this.introMusicStarted && this.state === 'intro') {
+                    this.introMusicStarted = true;
+                    Audio.startIntroMusic();
+                }
                 if (!Audio.musicPlaying && this.state === 'playing') {
                     Audio.startMusic();
                 }
