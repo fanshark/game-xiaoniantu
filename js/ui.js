@@ -214,6 +214,7 @@ const UI = {
                             <tr><td style="color:#ffd700;">E / Enter</td><td>对话/进入</td></tr>
                             <tr><td style="color:#ffd700;">空格 / Z</td><td>攻击</td></tr>
                             <tr><td style="color:#ffd700;">H</td><td>帮助/装备</td></tr>
+                            <tr><td style="color:#ffd700;">R</td><td>回到起点</td></tr>
                         </table>
                     </div>
                     <div style="flex:1;">
@@ -244,6 +245,7 @@ const UI = {
                         <li>🏠 <b>建筑</b>：走到门口按方向键进入，可回血/学技能</li>
                         <li>🐾 <b>宠物</b>：海滩金色NPC可获得战斗伙伴</li>
                         <li>🏜️ <b>沙漠</b>：每走一步体型-1mm，准备好再进入</li>
+                        <li>🏠 <b>回家</b>：按R键可随时传送回起始小路</li>
                     </ul>
                 </div>
                 <div style="text-align:center;margin-top:12px;">

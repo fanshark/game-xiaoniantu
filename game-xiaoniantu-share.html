@@ -1578,12 +1578,12 @@ const ZONES = {
             for (let y = 0; y < this.height; y++) {
                 map[y] = [];
                 for (let x = 0; x < this.width; x++) {
-                    if (y === 0 && x >= 21 && x <= 24) {
-                        map[y][x] = 'portal'; // North exit to desert
+                    if (y === 0 && x >= 16 && x <= 22) {
+                        map[y][x] = 'portal'; // North exit to desert (wider, easier to find)
                     } else if (y === 0) {
                         map[y][x] = 'wall';
-                    } else if (x === this.width - 1 && y >= 14 && y <= 17) {
-                        map[y][x] = 'portal'; // East exit to mountain
+                    } else if (x === this.width - 1 && y >= 12 && y <= 18) {
+                        map[y][x] = 'portal'; // East exit to mountain (wider)
                     } else if (y === this.height - 1 || x === 0 || x === this.width - 1) {
                         map[y][x] = 'wall';
                     } else {
@@ -3327,6 +3327,7 @@ const UI = {
                             <tr><td style="color:#ffd700;">E / Enter</td><td>对话/进入</td></tr>
                             <tr><td style="color:#ffd700;">空格 / Z</td><td>攻击</td></tr>
                             <tr><td style="color:#ffd700;">H</td><td>帮助/装备</td></tr>
+                            <tr><td style="color:#ffd700;">R</td><td>回到起点</td></tr>
                         </table>
                     </div>
                     <div style="flex:1;">
@@ -3357,6 +3358,7 @@ const UI = {
                         <li>🏠 <b>建筑</b>：走到门口按方向键进入，可回血/学技能</li>
                         <li>🐾 <b>宠物</b>：海滩金色NPC可获得战斗伙伴</li>
                         <li>🏜️ <b>沙漠</b>：每走一步体型-1mm，准备好再进入</li>
+                        <li>🏠 <b>回家</b>：按R键可随时传送回起始小路</li>
                     </ul>
                 </div>
                 <div style="text-align:center;margin-top:12px;">
@@ -4264,6 +4266,25 @@ const Game = {
             if (e.key === 'h' || e.key === 'H') {
                 if (this.state === 'playing' || this.state === 'dialogue') {
                     this.toggleHelp();
+                }
+            }
+
+            // Return to start (R key) - emergency escape
+            if ((e.key === 'r' || e.key === 'R') && this.state === 'playing' && !Combat.active) {
+                if (World.currentZone !== 'start') {
+                    if (confirm('确定要回到起始小路吗？')) {
+                        World.loadZone('start');
+                        NPCSystem.loadNPCs('start');
+                        Combat.loadEnemies('start');
+                        Player.tileX = 4;
+                        Player.tileY = 10;
+                        Player.pixelX = Player.tileX * TILE_SIZE + TILE_SIZE / 2;
+                        Player.pixelY = Player.tileY * TILE_SIZE + TILE_SIZE / 2;
+                        UI.showNotification('🏠 已回到起始小路');
+                        UI.updateHUD();
+                        UI.drawMinimap();
+                        this.saveGame();
+                    }
                 }
             }
         });

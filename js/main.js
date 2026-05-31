@@ -112,6 +112,25 @@ const Game = {
                     this.toggleHelp();
                 }
             }
+
+            // Return to start (R key) - emergency escape
+            if ((e.key === 'r' || e.key === 'R') && this.state === 'playing' && !Combat.active) {
+                if (World.currentZone !== 'start') {
+                    if (confirm('确定要回到起始小路吗？')) {
+                        World.loadZone('start');
+                        NPCSystem.loadNPCs('start');
+                        Combat.loadEnemies('start');
+                        Player.tileX = 4;
+                        Player.tileY = 10;
+                        Player.pixelX = Player.tileX * TILE_SIZE + TILE_SIZE / 2;
+                        Player.pixelY = Player.tileY * TILE_SIZE + TILE_SIZE / 2;
+                        UI.showNotification('🏠 已回到起始小路');
+                        UI.updateHUD();
+                        UI.drawMinimap();
+                        this.saveGame();
+                    }
+                }
+            }
         });
 
         document.addEventListener('keyup', (e) => {
